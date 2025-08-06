@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "webamon-cli"
+version = "0.1.0"
+description = "Webamon Search CLI - The Google of Threat Intelligence."
+readme = "README.md"
+authors = [{name = "Webamon", email = "info@webamon.com"}]
+license = "Apache-2.0"
+keywords = ["webamon", "threat-intelligence", "osint", "security", "threat", "hunting", "cli", "cybersecurity", "search", "intel"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators", 
+    "License :: OSI Approved :: Apache Software License",
+    "Topic :: Security",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: System :: Networking :: Monitoring",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Environment :: Console",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "click>=8.0.0",
+    "requests>=2.25.0",
+    "rich>=10.0.0",
+    "pydantic>=1.8.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "black>=21.0",
+    "flake8>=3.8",
+    "mypy>=0.910",
+]
+
+[project.urls]
+Homepage = "https://webamon.com"
+Repository = "https://github.com/webamon-org/webamon-cli"
+"Bug Tracker" = "https://github.com/webamon-org/webamon-cli/issues"
+Documentation = "https://github.com/webamon-org/webamon-cli#readme"
+"Webamon Search" = "https://google.webamon.com"
+
+[project.scripts]
+webamon = "webamon_cli.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["webamon_cli*"]
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true

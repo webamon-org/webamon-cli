@@ -36,7 +36,7 @@ pip install -e ".[dev]"
 
 1. **Start using immediately (no configuration needed for basic searches):**
 ```bash
-webamon search example.com domain.name,resolved_url
+webamon search example.com
 ```
 
 2. **Configure API key for pro features (optional):**
@@ -95,34 +95,44 @@ Search the Webamon database:
 
 **Basic Search:**
 
-The basic search requires two arguments: `SEARCH_TERM` and `RESULTS`.
+The basic search requires a `SEARCH_TERM` and optionally `RESULTS`.
 - `SEARCH_TERM`: What you're searching for (domain, IP, URL, hash, etc.)
 - `RESULTS`: Comma-separated list of fields to search within and return
+  - **Default fields**: `page_title,domain,resolved_url,dom`
+  - **Custom fields**: Specify your own field list
+
+💡 **Search matches are highlighted with yellow background in table view.**
 
 ```bash
-# Search for domain information
+# Search with default fields (page_title,domain,resolved_url,dom)
+webamon search example.com
+
+# Search with custom fields
 webamon search example.com domain.name,resolved_url
 
 # Search with more fields
 webamon search example.com domain.name,resolved_url,page_title
 
-# Limit results
-webamon search example.com domain.name,resolved_url --size 25
+# Limit results with default fields
+webamon search example.com --size 25
 
-# JSON output
-webamon search example.com domain.name,resolved_url --format json
+# JSON output with default fields
+webamon search example.com --format json
 ```
 
 **Pagination (Pro Users Only):**
 ```bash
-# Use offset for pagination
+# Use offset for pagination with default fields
+webamon search example.com --from 25 --size 25
+
+# Use offset with custom fields
 webamon search example.com domain.name,resolved_url --from 25 --size 25
 
-# Skip first 100 results
-webamon search example.com domain.name,resolved_url --from 100 --size 50
+# Skip first 100 results with default fields
+webamon search example.com --from 100 --size 50
 
 # Navigate large result sets
-webamon search "*.bank.com" domain.name,resolved_url --from 0 --size 100
+webamon search "*.bank.com" --from 0 --size 100
 ```
 
 **Lucene Search:**
@@ -182,7 +192,6 @@ webamon status --verbose
 
 ### Global Options
 
-- `--api-url`: Override API base URL (advanced users only)
 - `--api-key`: Override API key  
 - `--config-file`: Use specific config file
 - `--verbose, -v`: Enable verbose output
@@ -191,8 +200,8 @@ webamon status --verbose
 
 ### Security Research
 ```bash
-# Search for subdomains
-webamon search "*.example.com" domain.name,resolved_url --size 50
+# Search for subdomains with default fields
+webamon search "*.example.com" --size 50
 
 # Scan suspicious domains
 webamon scan suspicious-domain.com
@@ -211,7 +220,7 @@ webamon search --lucene 'domain.name:"example.com" AND scan_status:success' --in
 
 # Bulk domain analysis
 for domain in $(cat domains.txt); do
-  webamon search $domain domain.name,resolved_url >> results.json
+  webamon search $domain >> results.json
 done
 ```
 
@@ -231,7 +240,6 @@ webamon screenshot <report-id> --save monitoring/$(date +%Y%m%d).png
 
 ```json
 {
-  "api_url": "https://search.webamon.com",
   "api_key": "your-api-key-here",
   "verbose": false
 }

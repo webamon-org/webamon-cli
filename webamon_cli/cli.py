@@ -11,6 +11,52 @@ from .config import Config
 console = Console()
 
 
+def _highlight_search_marks(text: str) -> str:
+    """Convert <mark> tags to rich formatting for highlighting search matches."""
+    if '<mark>' not in text:
+        return text
+    
+    # Replace <mark> tags with rich formatting
+    # Use bright yellow background for highlights
+    highlighted = text.replace('<mark>', '[black on bright_yellow]')
+    highlighted = highlighted.replace('</mark>', '[/black on bright_yellow]')
+    
+    return highlighted
+
+
+def _smart_truncate_with_marks(text: str, max_length: int = 50) -> str:
+    """Intelligently truncate text while preserving <mark> tags."""
+    if len(text) <= max_length:
+        return text
+    
+    # If we have mark tags, try to keep them intact
+    if '<mark>' in text:
+        # Find the last complete mark tag that fits
+        truncate_pos = max_length - 3  # Reserve space for "..."
+        
+        # Look backwards for a safe place to cut (not inside a tag)
+        while truncate_pos > 0:
+            if text[truncate_pos] not in ['<', '>', 'k', 'r', 'a', 'm', '/', ' ']:
+                break
+            truncate_pos -= 1
+        
+        # Make sure we don't cut in the middle of a mark tag
+        test_text = text[:truncate_pos]
+        open_marks = test_text.count('<mark>')
+        close_marks = test_text.count('</mark>')
+        
+        # If we have unmatched marks, try to include the closing tag
+        if open_marks > close_marks and '</mark>' in text[truncate_pos:]:
+            next_close = text.find('</mark>', truncate_pos)
+            if next_close != -1 and next_close < max_length + 10:  # Allow some flexibility
+                truncate_pos = next_close + 7  # Include the closing tag
+        
+        return text[:truncate_pos] + "..."
+    else:
+        # No mark tags, simple truncation
+        return text[:max_length - 3] + "..."
+
+
 def _format_table_value(value: Any) -> str:
     """Format a value for table display, handling different data types."""
     if value is None:
@@ -21,10 +67,12 @@ def _format_table_value(value: Any) -> str:
         # This shouldn't happen after _process_table_data, but safety check
         return "[dim]<complex>[/dim]"
     elif isinstance(value, str):
-        # Truncate long strings
-        if len(value) > 50:
-            return value[:47] + "..."
-        return value
+        # Smart truncation that preserves <mark> tags
+        truncated_value = _smart_truncate_with_marks(value, 50)
+        
+        # Highlight search matches after truncation
+        formatted_value = _highlight_search_marks(truncated_value)
+        return formatted_value
     else:
         # Numbers, etc.
         str_value = str(value)
@@ -101,13 +149,11 @@ def _process_table_data(data: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]
 
 
 @click.group()
-@click.option('--api-url', help='API base URL')
 @click.option('--api-key', help='API key for authentication')
 @click.option('--config-file', help='Path to config file')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
 @click.pass_context
-def main(ctx, api_url: Optional[str], api_key: Optional[str], 
-         config_file: Optional[str], verbose: bool):
+def main(ctx, api_key: Optional[str], config_file: Optional[str], verbose: bool):
     """Webamon Search CLI - The Google of Threat Intelligence.
     
     Search domains, scan websites, and retrieve screenshots using the Webamon API.
@@ -118,8 +164,6 @@ def main(ctx, api_url: Optional[str], api_key: Optional[str],
     config = Config.load(config_file)
     
     # Override config with command line options
-    if api_url:
-        config.api_url = api_url
     if api_key:
         config.api_key = api_key
     
@@ -177,15 +221,20 @@ def search(ctx, search_term: str, results: Optional[str], size: int, from_offset
     
     SEARCH_TERM: The search term (IP, domain, URL, hash, etc.)
     RESULTS: Comma-separated list of fields to search within and return
-             (Required for basic search, not needed for Lucene search)
+             (Optional - defaults to: page_title,domain,resolved_url,dom)
              Examples: domain.name,resolved_url,page_title
     
     Note: Table format automatically simplifies complex nested data for readability.
+    Search matches are highlighted with yellow background in table view.
     Use --format json to see complete data including all nested fields.
     
     Examples:
     \b
-    # Basic search (requires RESULTS)
+    # Basic search (uses default fields)
+    webamon search example.com
+    webamon search example.com --size 20
+    
+    # Basic search with custom fields
     webamon search example.com domain.name,resolved_url
     webamon search example.com domain.name,resolved_url,page_title
     
@@ -194,7 +243,7 @@ def search(ctx, search_term: str, results: Optional[str], size: int, from_offset
     webamon search --lucene 'resolved_ip:[192.168.1.0 TO 192.168.1.255]' --index scans
     
     # Pagination (Pro users only)
-    webamon search example.com domain.name,resolved_url --from 10 --size 25
+    webamon search example.com --from 10 --size 25
     webamon search --lucene 'domain.name:"bank*"' --index scans --from 50 --size 20
     """
     client = ctx.obj['client']
@@ -204,13 +253,11 @@ def search(ctx, search_term: str, results: Optional[str], size: int, from_offset
         console.print("[red]Error:[/red] --index is required when using --lucene")
         ctx.exit(1)
     
-    # Validate RESULTS argument for non-Lucene searches
+    # Set default RESULTS for non-Lucene searches if not provided
     if not lucene and not results:
-        console.print("[red]Error:[/red] RESULTS argument is required for basic search")
-        console.print("Usage: webamon search <SEARCH_TERM> <RESULTS> [OPTIONS]")
-        console.print("Example: webamon search example.com domain.name,resolved_url")
-        console.print("For Lucene search, use: webamon search --lucene '<QUERY>' --index <INDEX>")
-        ctx.exit(1)
+        results = "page_title,domain,resolved_url,dom"
+        if config.verbose:
+            console.print(f"[dim]Using default fields: {results}[/dim]")
     
     # Check if pagination is being used without API key
     if from_offset > 0 and not config.api_key:
@@ -541,10 +588,9 @@ def screenshot(ctx, report_id: str, save: Optional[str], output_format: str):
 
 
 @main.command()
-@click.option('--api-url', help='API base URL (leave empty for auto-detection)')
 @click.option('--api-key', help='API key (optional, enables pro features)')
 @click.option('--save', is_flag=True, help='Save configuration to file')
-def configure(api_url: Optional[str], api_key: Optional[str], save: bool):
+def configure(api_key: Optional[str], save: bool):
     """Configure API connection settings."""
     
     # Prompt for API key if not provided
@@ -553,16 +599,14 @@ def configure(api_url: Optional[str], api_key: Optional[str], save: bool):
         if api_key == '':
             api_key = None
     
-    # Auto-detect URL based on API key
-    if not api_url:
-        if api_key:
-            api_url = 'https://pro.webamon.com'
-            console.print("[dim]Using pro.webamon.com (API key detected)[/dim]")
-        else:
-            api_url = 'https://search.webamon.com'
-            console.print("[dim]Using search.webamon.com (no API key)[/dim]")
+    # Create config (API URL is auto-detected based on API key)
+    config = Config(api_key=api_key)
     
-    config = Config(api_url=api_url, api_key=api_key)
+    # Show which endpoint will be used
+    if api_key:
+        console.print("[dim]Using pro.webamon.com (API key detected)[/dim]")
+    else:
+        console.print("[dim]Using search.webamon.com (no API key)[/dim]")
     
     # Test the connection
     client = WebamonClient(config)

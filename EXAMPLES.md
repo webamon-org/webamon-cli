@@ -6,14 +6,21 @@ This document provides practical examples of using the Webamon CLI tool.
 
 ### Understanding the RESULTS Argument
 
-**Important:** For basic search (non-Lucene), you must specify which fields to search within using the RESULTS argument.
+**New:** For basic search (non-Lucene), RESULTS argument is now optional! 
+- **Default fields**: `page_title,domain,resolved_url,dom`
+- **Custom fields**: Specify your own field list as before
+
+💡 **Search matches are highlighted with yellow background in table view.**
 
 ```bash
-# Basic syntax: webamon search <SEARCH_TERM> <RESULTS>
+# New: Simple syntax with default fields (page_title,domain,resolved_url,dom)
+webamon search example.com
+
+# Traditional: Custom fields  
 webamon search example.com domain.name,resolved_url
 
 # SEARCH_TERM: What you're looking for (domain, IP, URL, etc.)
-# RESULTS: Comma-separated list of fields to search within and return
+# RESULTS: Optional comma-separated list of fields (uses defaults if omitted)
 ```
 
 **Common RESULTS field combinations:**
@@ -24,13 +31,16 @@ webamon search example.com domain.name,resolved_url
 
 ### 1. Basic Domain Search (Free Tier)
 ```bash
-# Search for basic domain information
-webamon search example.com domain.name,resolved_url
+# Search with default fields (page_title,domain,resolved_url,dom)
+webamon search example.com
 
-# Search with more results and additional fields
-webamon search example.com domain.name,resolved_url,page_title --size 25
+# Search with more results using default fields
+webamon search example.com --size 25
 
-# Search by IP address
+# Search with custom fields
+webamon search example.com domain.name,resolved_url,page_title
+
+# Search by IP address with custom fields
 webamon search 192.168.1.1 resolved_ip,domain.name,scan_status
 ```
 
@@ -118,7 +128,7 @@ done
 
 # Search for multiple terms
 while read domain; do
-  webamon search "$domain" domain.name,resolved_url >> domain_intel.json
+  webamon search "$domain" >> domain_intel.json
 done < domains.txt
 ```
 
@@ -202,7 +212,7 @@ echo "Starting monitoring for $DOMAIN at $DATE"
 
 # Search for existing data
 echo "Searching existing data..."
-webamon search "$DOMAIN" domain.name,resolved_url,page_title > "search_${DOMAIN}_${DATE}.json"
+webamon search "$DOMAIN" > "search_${DOMAIN}_${DATE}.json"
 
 # Initiate new scan with auto-report
 echo "Initiating new scan..."
@@ -251,6 +261,10 @@ webamon search example.com domain.name,resolved_url
 ```
 
 The table format intelligently handles complex data for optimal readability:
+
+**Search Highlighting:** 
+- **Search matches** appear with yellow background highlighting
+- Original `<mark>` tags from API are converted to visual highlights
 
 **Simple Data:** Displayed directly
 - Strings, numbers, booleans
@@ -359,18 +373,20 @@ webamon_quick() {
 
 ## Common Errors and Solutions
 
-### "Missing argument 'RESULTS'" or "RESULTS argument is required"
+### "Missing argument 'RESULTS'" or "RESULTS argument is required" (Legacy)
 
-This error occurs when you forget to specify the RESULTS argument for basic search:
+**Note:** This error is now less common since RESULTS is optional with default fields.
+
+If you encounter this error with older versions:
 
 ```bash
-# ❌ Wrong - missing RESULTS argument for basic search
+# ✅ New: RESULTS is optional (uses defaults: page_title,domain,resolved_url,dom)
 webamon search example.com
 
-# ✅ Correct - includes RESULTS argument
+# ✅ Traditional: Custom RESULTS argument
 webamon search example.com domain.name,resolved_url
 
-# ✅ Also correct - Lucene search doesn't need RESULTS
+# ✅ Lucene search never needs RESULTS
 webamon search --lucene 'domain.name:"example.com"' --index scans
 ```
 
@@ -423,4 +439,4 @@ webamon search --lucene 'domain.name:"bank*"' --index scans --from 100 --size 50
 5. **Lucene Syntax**: Learn Lucene query syntax for powerful searches
 6. **Error Handling**: Always check return codes in scripts
 7. **Configuration**: Use environment variables or config files for API keys
-8. **Always Include RESULTS**: For basic search, always specify the fields you want returned
+8. **Field Selection**: Use default fields for quick searches, specify custom fields for targeted results

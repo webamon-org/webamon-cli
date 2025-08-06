@@ -10,18 +10,13 @@ class Config:
     """Configuration class for storing API settings."""
     
     def __init__(self, 
-                 api_url: Optional[str] = None, 
                  api_key: Optional[str] = None,
                  verbose: bool = False):
         """Initialize configuration."""
         self.api_key = api_key or os.getenv('WEBAMON_API_KEY')
         
-        # Use pro.webamon.com if API key is set, otherwise search.webamon.com
-        if api_url:
-            self.api_url = api_url
-        elif os.getenv('WEBAMON_API_URL'):
-            self.api_url = os.getenv('WEBAMON_API_URL')
-        elif self.api_key:
+        # Automatically select API URL based on API key presence
+        if self.api_key:
             self.api_url = 'https://pro.webamon.com'
         else:
             self.api_url = 'https://search.webamon.com'
@@ -49,7 +44,6 @@ class Config:
                 pass
         
         return cls(
-            api_url=config_data.get('api_url'),
             api_key=config_data.get('api_key'),
             verbose=config_data.get('verbose', False)
         )
@@ -64,7 +58,6 @@ class Config:
             config_path = config_dir / 'config.json'
         
         config_data = {
-            'api_url': self.api_url,
             'api_key': self.api_key,
             'verbose': self.verbose
         }

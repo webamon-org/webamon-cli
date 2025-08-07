@@ -14,17 +14,39 @@ pip install webamon-cli
 
 > **Webamon Search** - The Google of Threat Intelligence. Access millions of scanned domains, IPs, and threat indicators.
 
-### Development Installation
+### Global Installation (Linux/macOS)
 
+**One-liner for global installation:**
+```bash
+git clone https://github.com/webamon-org/webamon-cli.git && cd webamon-cli && pipx install . && pipx ensurepath && export PATH="$HOME/.local/bin:$PATH" && webamon --help
+```
+
+**Step by step:**
 1. Clone the repository:
 ```bash
 git clone https://github.com/webamon-org/webamon-cli.git
 cd webamon-cli
 ```
 
-2. Install the package:
+2. Install globally with pipx:
 ```bash
-pip install .
+pipx install . && pipx ensurepath && export PATH="$HOME/.local/bin:$PATH"
+```
+
+3. Test installation:
+```bash
+webamon --help
+```
+
+### Development Installation
+
+For development work:
+```bash
+git clone https://github.com/webamon-org/webamon-cli.git
+cd webamon-cli
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -e .
 ```
 
 ## Quick Start

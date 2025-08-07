@@ -65,7 +65,7 @@ The CLI can be configured in several ways:
 
 1. **Interactive configuration:**
 ```bash
-webamon configure --save
+webamon configure
 ```
 
 2. **Environment variables:**
@@ -108,15 +108,15 @@ webamon search example.com domain.name,resolved_url
 # Search with more fields
 webamon search example.com domain.name,resolved_url,page_title
 
-# Limit results with default fields
-webamon search example.com --size 25
-
 # JSON output with default fields
 webamon search example.com --format json
 ```
 
 **Pagination (Pro Users Only):**
 ```bash
+# Limit results with default fields
+webamon search example.com --size 25
+
 # Use offset for pagination with default fields
 webamon search example.com --from 25 --size 25
 
@@ -136,7 +136,7 @@ webamon search "*.bank.com" --from 0 --size 100
 webamon search --lucene 'domain.name:"bank*" AND scan_status:success' --index scans
 
 # Specify fields to return
-webamon search --lucene 'domain.name:"example.com"' --index domains --fields domain.name,page_title
+webamon search --lucene 'domain.name:"example.com"' --index scans --fields domain.name,page_title
 ```
 
 #### Scan
@@ -169,13 +169,11 @@ webamon report bf18c02d-ff0e-46a9-9a59-5b7b94fb27fb --format table
 Retrieve scan screenshots:
 ```bash
 # Get screenshot info
-webamon screenshot 392ac37e-ed52-4693-b49e-b15791231250
+webamon screenshot bf18c02d-ff0e-46a9-9a59-5b7b94fb27fb
 
 # Save screenshot to file
-webamon screenshot 392ac37e-ed52-4693-b49e-b15791231250 --save screenshot.png
+webamon screenshot bf18c02d-ff0e-46a9-9a59-5b7b94fb27fb --save screenshot.png
 
-# JSON output
-webamon screenshot 392ac37e-ed52-4693-b49e-b15791231250 --format json
 ```
 
 #### Status
@@ -196,7 +194,7 @@ webamon status --verbose
 ### Security Research
 ```bash
 # Search for subdomains with default fields
-webamon search "*.example.com" --size 50
+webamon search "*.example.com"
 
 # Scan suspicious domains
 webamon scan suspicious-domain.com
@@ -219,17 +217,7 @@ for domain in $(cat domains.txt); do
 done
 ```
 
-### Website Monitoring
-```bash
-# Scan website
-webamon scan https://example.com
 
-# Check scan results
-webamon search --lucene 'submission_url:"https://example.com"' --index scans
-
-# Download screenshot
-webamon screenshot <report-id> --save monitoring/$(date +%Y%m%d).png
-```
 
 ## Configuration File Format
 
@@ -246,7 +234,7 @@ webamon screenshot <report-id> --save monitoring/$(date +%Y%m%d).png
 
 ```bash
 # Clone and install
-git clone https://github.com/yourusername/webamon-cli.git
+git clone https://github.com/webamon-org/webamon-cli.git
 cd webamon-cli
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -259,23 +247,6 @@ pip install -e .
 python -m build
 ```
 
-## API Integration
-
-The CLI is designed to work with REST APIs. You may need to customize the client in `webamon_cli/client.py` to match your specific API:
-
-1. **Update endpoints** in the `WebamonClient` class methods
-2. **Modify authentication** if your API uses different auth methods
-3. **Adjust response parsing** if your API has different response formats
-
-### Example Customization
-
-```python
-# In webamon_cli/client.py
-def list_items(self, limit: int = 10) -> List[Dict[str, Any]]:
-    # Change '/items' to your actual endpoint
-    response = self._make_request('GET', '/your-endpoint', params={'limit': limit})
-    return response
-```
 
 ## License
 

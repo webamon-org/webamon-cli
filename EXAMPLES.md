@@ -34,9 +34,6 @@ webamon search example.com domain.name,resolved_url
 # Search with default fields (page_title,domain,resolved_url,dom)
 webamon search example.com
 
-# Search with more results using default fields
-webamon search example.com --size 25
-
 # Search with custom fields
 webamon search example.com domain.name,resolved_url,page_title
 
@@ -46,8 +43,8 @@ webamon search 192.168.1.1 resolved_ip,domain.name,scan_status
 
 ### 2. Configure Pro API Access
 ```bash
-# Interactive configuration
-webamon configure --save
+# Interactive configuration (automatically saves)
+webamon configure
 
 # Or set via environment
 export WEBAMON_API_KEY="your-api-key"
@@ -232,7 +229,7 @@ echo "Monitoring complete for $DOMAIN"
 ### Security Research
 ```bash
 # Find subdomains
-webamon search "*.example.com" domain.name,resolved_url --size 50
+webamon search "*.example.com" domain.name,resolved_url
 
 # Search for specific technologies
 webamon search --lucene 'page_title:"WordPress" AND domain.name:"*.com"' --index scans --size 100
@@ -313,9 +310,6 @@ webamon search --lucene 'scan_status:success' --index scans --format json | \
 ```bash
 # Basic connectivity test
 webamon status
-
-# Verbose status with details
-webamon --verbose status
 ```
 
 ### Handle Rate Limits
@@ -329,8 +323,8 @@ done
 
 ### Debugging
 ```bash
-# Enable verbose output for debugging
-webamon --verbose search example.com domain.name
+# Basic search for debugging
+webamon search example.com domain.name
 
 # Check configuration
 webamon configure  # Shows current settings

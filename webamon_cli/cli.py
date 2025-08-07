@@ -151,9 +151,8 @@ def _process_table_data(data: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]
 @click.group()
 @click.option('--api-key', help='API key for authentication')
 @click.option('--config-file', help='Path to config file')
-@click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
 @click.pass_context
-def main(ctx, api_key: Optional[str], config_file: Optional[str], verbose: bool):
+def main(ctx, api_key: Optional[str], config_file: Optional[str]):
     """Webamon Search CLI - The Google of Threat Intelligence.
     
     Search domains, scan websites, and retrieve screenshots using the Webamon API.
@@ -166,8 +165,6 @@ def main(ctx, api_key: Optional[str], config_file: Optional[str], verbose: bool)
     # Override config with command line options
     if api_key:
         config.api_key = api_key
-    
-    config.verbose = verbose
     
     # Store config and client in context
     ctx.obj['config'] = config
@@ -184,19 +181,8 @@ def status(ctx):
     try:
         test_result = client.test_connection()
         
-        if config.verbose:
-            console.print("[green]✓[/green] Connected to Webamon Search API")
-            console.print("[dim]The Google of Threat Intelligence[/dim]")
-            console.print(f"API URL: {config.api_url}")
-            if config.api_key:
-                console.print(f"API Key: Set (length: {len(config.api_key)} chars)")
-                console.print("[dim]Using x-api-key header authentication[/dim]")
-            else:
-                console.print("API Key: Not set (using free tier)")
-            console.print(f"Test response received: {len(str(test_result))} characters")
-        else:
-            console.print("[green]Webamon Search API is accessible[/green]")
-            console.print("[dim]The Google of Threat Intelligence[/dim]")
+        console.print("[green]Webamon Search API is accessible[/green]")
+        console.print("[dim]The Google of Threat Intelligence[/dim]")
             
     except Exception as e:
         console.print(f"[red]✗[/red] Failed to connect: {e}")
@@ -256,8 +242,6 @@ def search(ctx, search_term: str, results: Optional[str], size: int, from_offset
     # Set default RESULTS for non-Lucene searches if not provided
     if not lucene and not results:
         results = "page_title,domain,resolved_url,dom"
-        if config.verbose:
-            console.print(f"[dim]Using default fields: {results}[/dim]")
     
     # Check if pagination is being used without API key
     if from_offset > 0 and not config.api_key:
@@ -589,9 +573,10 @@ def screenshot(ctx, report_id: str, save: Optional[str], output_format: str):
 
 @main.command()
 @click.option('--api-key', help='API key (optional, enables pro features)')
-@click.option('--save', is_flag=True, help='Save configuration to file')
-def configure(api_key: Optional[str], save: bool):
-    """Configure API connection settings."""
+def configure(api_key: Optional[str]):
+    """Configure API connection settings.
+    
+    Configuration is automatically saved after successful validation."""
     
     # Prompt for API key if not provided
     if api_key is None:
@@ -620,9 +605,9 @@ def configure(api_key: Optional[str], save: bool):
         console.print(f"[cyan]API URL:[/cyan] {config.api_url}")
         console.print(f"[cyan]API Key:[/cyan] {'Set' if config.api_key else 'Not set (free tier)'}")
         
-        if save:
-            config.save()
-            console.print("[green]✓[/green] Configuration saved")
+        # Always save the configuration
+        config.save()
+        console.print("[green]✓[/green] Configuration saved")
             
     except Exception as e:
         console.print(f"[red]✗[/red] Configuration test failed: {e}")

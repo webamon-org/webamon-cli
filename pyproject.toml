@@ -35,14 +35,6 @@ dependencies = [
     "pydantic>=1.8.0",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=6.0",
-    "black>=21.0",
-    "flake8>=3.8",
-    "mypy>=0.910",
-]
-
 [project.urls]
 Homepage = "https://webamon.com"
 Repository = "https://github.com/webamon-org/webamon-cli"
@@ -56,12 +48,3 @@ webamon = "webamon_cli.cli:main"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["webamon_cli*"]
-
-[tool.black]
-line-length = 88
-target-version = ['py38']
-
-[tool.mypy]
-python_version = "3.8"
-warn_return_any = true
-warn_unused_configs = true

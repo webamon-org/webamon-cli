@@ -22,14 +22,9 @@ git clone https://github.com/webamon-org/webamon-cli.git
 cd webamon-cli
 ```
 
-2. Install in development mode:
+2. Install the package:
 ```bash
-pip install -e .
-```
-
-Or install with development dependencies:
-```bash
-pip install -e ".[dev]"
+pip install .
 ```
 
 ## Quick Start
@@ -255,25 +250,7 @@ git clone https://github.com/yourusername/webamon-cli.git
 cd webamon-cli
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -e ".[dev]"
-```
-
-### Code Formatting
-
-```bash
-black webamon_cli/
-```
-
-### Type Checking
-
-```bash
-mypy webamon_cli/
-```
-
-### Testing
-
-```bash
-pytest
+pip install -e .
 ```
 
 ### Building

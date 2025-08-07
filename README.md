@@ -16,9 +16,9 @@ pip install webamon-cli
 
 ### Global Installation (Linux/macOS)
 
-**One-liner for global installation:**
+**One-liner for global installation (installs pipx if needed):**
 ```bash
-git clone https://github.com/webamon-org/webamon-cli.git && cd webamon-cli && pipx install . && pipx ensurepath && export PATH="$HOME/.local/bin:$PATH" && webamon --help
+git clone https://github.com/webamon-org/webamon-cli.git && cd webamon-cli && (command -v pipx >/dev/null 2>&1 || (python3 -m pip install --user pipx && python3 -m pipx ensurepath)) && pipx install . && pipx ensurepath && export PATH="$HOME/.local/bin:$PATH" && webamon --help
 ```
 
 **Step by step:**
@@ -28,15 +28,34 @@ git clone https://github.com/webamon-org/webamon-cli.git
 cd webamon-cli
 ```
 
-2. Install globally with pipx:
+2. Install pipx (if not already installed):
+```bash
+# Check if pipx is installed
+command -v pipx >/dev/null 2>&1 || {
+    # Install pipx using one of these methods:
+    
+    # Option 1: Using pip (recommended)
+    python3 -m pip install --user pipx
+    python3 -m pipx ensurepath
+    
+    # Option 2: Using package manager (alternative)
+    # Ubuntu/Debian: sudo apt install pipx
+    # macOS: brew install pipx
+    # Fedora/CentOS: sudo dnf install pipx
+}
+```
+
+3. Install webamon-cli globally with pipx:
 ```bash
 pipx install . && pipx ensurepath && export PATH="$HOME/.local/bin:$PATH"
 ```
 
-3. Test installation:
+4. Test installation:
 ```bash
 webamon --help
 ```
+
+> **Note**: If the `webamon` command is not found after installation, restart your terminal or run `source ~/.bashrc` (Linux) / `source ~/.zshrc` (macOS).
 
 ### Development Installation
 
@@ -337,6 +356,27 @@ pip install -e .
 python -m build
 ```
 
+
+## Uninstall
+
+### Global Installation (pipx)
+```bash
+pipx uninstall webamon-cli
+```
+
+### PyPI Installation
+```bash
+pip uninstall webamon-cli
+```
+
+### Development Installation
+```bash
+# If installed with pip install -e .
+pip uninstall webamon-cli
+
+# Remove the repository
+rm -rf webamon-cli
+```
 
 ## License
 

@@ -16,46 +16,61 @@ pip install webamon-cli
 
 ### Global Installation (Linux/macOS)
 
-**One-liner for global installation (installs pipx if needed):**
+**Recommended: Install via Package Manager**
 ```bash
-git clone https://github.com/webamon-org/webamon-cli.git && cd webamon-cli && (command -v pipx >/dev/null 2>&1 || (python3 -m pip install --user pipx && python3 -m pipx ensurepath)) && pipx install . && pipx ensurepath && export PATH="$HOME/.local/bin:$PATH" && webamon --help
+# Ubuntu/Debian
+sudo apt update && sudo apt install pipx
+pipx install webamon-cli
+pipx ensurepath
+
+# Fedora/CentOS/RHEL
+sudo dnf install pipx
+pipx install webamon-cli
+pipx ensurepath
+
+# macOS
+brew install pipx
+pipx install webamon-cli
+pipx ensurepath
+
+# Arch Linux
+sudo pacman -S python-pipx
+pipx install webamon-cli
+pipx ensurepath
 ```
 
-**Step by step:**
-1. Clone the repository:
+**Alternative: Install from Source**
+
+If you need the latest development version or package managers don't work:
+
+1. Install pipx first:
+```bash
+# Ubuntu/Debian: sudo apt install pipx
+# Fedora/CentOS: sudo dnf install pipx  
+# macOS: brew install pipx
+# Arch: sudo pacman -S python-pipx
+```
+
+2. Clone and install:
 ```bash
 git clone https://github.com/webamon-org/webamon-cli.git
 cd webamon-cli
+pipx install .
+pipx ensurepath
 ```
 
-2. Install pipx (if not already installed):
+**Verify Installation:**
 ```bash
-# Check if pipx is installed
-command -v pipx >/dev/null 2>&1 || {
-    # Install pipx using one of these methods:
-    
-    # Option 1: Using pip (recommended)
-    python3 -m pip install --user pipx
-    python3 -m pipx ensurepath
-    
-    # Option 2: Using package manager (alternative)
-    # Ubuntu/Debian: sudo apt install pipx
-    # macOS: brew install pipx
-    # Fedora/CentOS: sudo dnf install pipx
-}
-```
-
-3. Install webamon-cli globally with pipx:
-```bash
-pipx install . && pipx ensurepath && export PATH="$HOME/.local/bin:$PATH"
-```
-
-4. Test installation:
-```bash
+# Test the installation
 webamon --help
-```
 
-> **Note**: If the `webamon` command is not found after installation, restart your terminal or run `source ~/.bashrc` (Linux) / `source ~/.zshrc` (macOS).
+# If command not found, add to PATH:
+export PATH="$HOME/.local/bin:$PATH"
+# Then restart your terminal or run:
+source ~/.bashrc  # Linux
+# or
+source ~/.zshrc   # macOS
+```
 
 ### Development Installation
 
@@ -70,7 +85,19 @@ pip install -e .
 
 ## Quick Start
 
-1. **Start using immediately (no configuration needed for basic searches):**
+**Install globally:**
+```bash
+# Ubuntu/Debian
+sudo apt install pipx && pipx install webamon-cli
+
+# Fedora/CentOS  
+sudo dnf install pipx && pipx install webamon-cli
+
+# macOS
+brew install pipx && pipx install webamon-cli
+```
+
+**Start using immediately (no configuration needed for basic searches):**
 ```bash
 webamon search apk
 ```

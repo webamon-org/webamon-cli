@@ -33,7 +33,7 @@ class WebamonClient:
         
         # Set up headers
         self.session.headers.update({
-            'User-Agent': 'webamon-cli/0.1.0',
+            'User-Agent': 'webamon-cli/0.1.1',
         })
         
         # Add API key to headers if available

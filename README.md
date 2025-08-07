@@ -165,6 +165,25 @@ webamon report bf18c02d-ff0e-46a9-9a59-5b7b94fb27fb
 webamon report bf18c02d-ff0e-46a9-9a59-5b7b94fb27fb --format table
 ```
 
+#### Infostealers
+Search for compromised credentials by domain:
+```bash
+# Search for compromised credentials
+webamon infostealers example.com
+
+# Search domain with hyphens (automatically quoted)
+webamon infostealers bank-site.com
+
+# Get more results (Pro users)
+webamon infostealers example.com --size 50
+
+# Specify fields to return
+webamon infostealers example.com --fields domain,username,password
+
+# JSON output
+webamon infostealers example.com --format json
+```
+
 #### Screenshot
 Retrieve scan screenshots:
 ```bash
@@ -180,7 +199,6 @@ webamon screenshot bf18c02d-ff0e-46a9-9a59-5b7b94fb27fb --save screenshot.png
 Check API connectivity:
 ```bash
 webamon status
-webamon status --verbose
 ```
 
 #### Fields

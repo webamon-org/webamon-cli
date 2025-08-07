@@ -86,7 +86,36 @@ webamon screenshot bf18c02d-ff0e-46a9-9a59-5b7b94fb27fb
 webamon screenshot bf18c02d-ff0e-46a9-9a59-5b7b94fb27fb --save screenshot.png
 ```
 
-### 6. Discover Available Fields
+### 6. Infostealers Search
+```bash
+# Search for compromised credentials by domain
+webamon infostealers example.com
+
+# Search domain with hyphens (automatically quoted)
+webamon infostealers bank-site.com
+
+# Get more results (Pro users only)
+webamon infostealers example.com --size 50
+
+# Custom fields
+webamon infostealers example.com --fields domain,username,password,date
+
+# JSON output for processing
+webamon infostealers example.com --format json
+
+# Pagination (Pro users only)
+webamon infostealers example.com --from 50 --size 25
+```
+
+**What it searches:**
+- `domain:example.com` - Direct domain matches
+- `username:@example.com` - Email addresses with @domain
+
+**Automatic quoting:**
+- `bank.com` → `domain:bank.com OR username:@bank.com`
+- `bank-site.com` → `domain:"bank-site.com" OR username:@bank-site.com`
+
+### 7. Discover Available Fields
 ```bash
 # Show all available scan fields (700+ fields!)
 webamon fields
@@ -258,6 +287,53 @@ if [ ! -z "$REPORT_ID" ]; then
 fi
 
 echo "Monitoring complete for $DOMAIN"
+```
+
+### Infostealers Investigation Workflow
+```bash
+#!/bin/bash
+# infostealer_check.sh
+
+DOMAIN="$1"
+if [ -z "$DOMAIN" ]; then
+  echo "Usage: $0 <domain>"
+  exit 1
+fi
+
+DATE=$(date +%Y%m%d_%H%M%S)
+
+echo "🔍 Checking $DOMAIN for compromised credentials..."
+
+# 1. Search infostealers database
+echo "1. Searching infostealers database..."
+RESULTS=$(webamon infostealers "$DOMAIN" --format json --size 100)
+echo "$RESULTS" > "infostealers_${DOMAIN}_${DATE}.json"
+
+# Count results
+COUNT=$(echo "$RESULTS" | jq 'length // 0')
+echo "Found $COUNT compromised credentials"
+
+if [ "$COUNT" -gt 0 ]; then
+  echo "⚠️  COMPROMISED CREDENTIALS FOUND!"
+  
+  # 2. Extract unique usernames
+  echo "2. Extracting unique usernames..."
+  echo "$RESULTS" | jq -r '.[] | .username // empty' | sort -u > "usernames_${DOMAIN}_${DATE}.txt"
+  
+  # 3. Show summary
+  echo "3. Summary:"
+  echo "   Total credentials: $COUNT"
+  echo "   Unique usernames: $(cat "usernames_${DOMAIN}_${DATE}.txt" | wc -l)"
+  echo "   Files created:"
+  echo "   - infostealers_${DOMAIN}_${DATE}.json"
+  echo "   - usernames_${DOMAIN}_${DATE}.txt"
+  
+  # 4. Show sample (first 5 usernames)
+  echo "   Sample usernames:"
+  head -5 "usernames_${DOMAIN}_${DATE}.txt" | sed 's/^/     - /'
+else
+  echo "✅ No compromised credentials found for $DOMAIN"
+fi
 ```
 
 ### Security Research
@@ -469,3 +545,4 @@ webamon search --lucene 'domain.name:"bank*"' --index scans --from 100 --size 50
 7. **Configuration**: Use environment variables or config files for API keys
 8. **Field Discovery**: Use `webamon fields` to discover available fields before building queries
 9. **Field Selection**: Use default fields for quick searches, specify custom fields for targeted results
+10. **Infostealers Monitoring**: Regularly check domains with `webamon infostealers` for compromised credentials

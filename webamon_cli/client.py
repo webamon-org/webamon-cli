@@ -60,7 +60,14 @@ class WebamonClient:
             if e.response.status_code == 401:
                 raise WebamonAPIError("Authentication failed. Check your API key.")
             elif e.response.status_code == 403:
-                raise WebamonAPIError("Access forbidden. Check your permissions.")
+                if not self.config.api_key:
+                    raise WebamonAPIError(
+                        "Rate limit exceeded - you've hit the daily quota (20 queries/day for free tier).\n"
+                        "Upgrade to Pro for 1,000+ daily queries, larger response sizes, and premium features:\n"
+                        "https://webamon.com/pricing"
+                    )
+                else:
+                    raise WebamonAPIError("Access forbidden. Check your permissions.")
             elif e.response.status_code == 404:
                 raise WebamonAPIError("Resource not found.")
             elif e.response.status_code == 429:
@@ -86,16 +93,25 @@ class WebamonClient:
         except requests.exceptions.ConnectionError as e:
             # Check if this might be a quota limit issue
             error_str = str(e).lower()
-            if any(keyword in error_str for keyword in ['max retries exceeded', 'connection pool', 'httpsconnectionpool']):
+            # Look for specific quota-related error patterns
+            quota_keywords = [
+                'too many 429 error responses',
+                '429 error responses',
+                'max retries exceeded',
+                'connection pool',
+                'httpsconnectionpool'
+            ]
+            
+            if any(keyword in error_str for keyword in quota_keywords):
                 if not self.config.api_key:
                     raise WebamonAPIError(
-                        "Connection failed - you may have exceeded the daily quota (20 queries/day for free tier).\n"
+                        "Rate limit exceeded - you've hit the daily quota (20 queries/day for free tier).\n"
                         "Upgrade to Pro for 1,000+ daily queries, larger response sizes, and premium features:\n"
                         "https://webamon.com/pricing"
                     )
                 else:
                     raise WebamonAPIError(
-                        "Connection failed - you may have exceeded your daily API quota.\n"
+                        "Rate limit exceeded - you've hit your daily API quota.\n"
                         "Check your usage or upgrade your plan at: https://webamon.com/pricing"
                     )
             else:

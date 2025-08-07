@@ -16,12 +16,21 @@ console = Console()
 
 def _load_scan_fields() -> List[Dict[str, str]]:
     """Load scan fields from the included JSON file."""
-    try:
-        fields_file = Path(__file__).parent / "scans_fields.json"
-        with open(fields_file, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return []
+    # Try multiple possible locations for the fields file
+    possible_paths = [
+        Path(__file__).parent / "scans_fields.json",  # Installed package location
+        Path(__file__).parent.parent / "webamon_cli" / "scans_fields.json",  # Development location
+    ]
+    
+    for fields_file in possible_paths:
+        try:
+            if fields_file.exists():
+                with open(fields_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+        except (json.JSONDecodeError, Exception):
+            continue
+    
+    return []
 
 
 def _format_error_message(error: Exception) -> None:
@@ -244,6 +253,13 @@ def fields(ctx, search: Optional[str], category: Optional[str], output_format: s
     
     if not fields_data:
         console.print("[red]Error:[/red] Could not load scan fields data")
+        console.print("\n[yellow]This might happen if:[/yellow]")
+        console.print("• The package wasn't installed properly")
+        console.print("• You're running from source without installing")
+        console.print("\n[yellow]Solutions:[/yellow]")
+        console.print("• Install the package: [cyan]pip install .[/cyan]")
+        console.print("• Or install in development mode: [cyan]pip install -e .[/cyan]")
+        console.print("• Or force reinstall: [cyan]pip install --force-reinstall .[/cyan]")
         ctx.exit(1)
     
     # Filter fields based on search and category
@@ -290,6 +306,113 @@ def fields(ctx, search: Optional[str], category: Optional[str], output_format: s
         # Show usage hints
         console.print(f"\n[dim]💡 Usage: webamon search example.com field1,field2,field3[/dim]")
         console.print(f"[dim]💡 Lucene: webamon search --lucene 'field:value' --index scans --fields field1,field2[/dim]")
+
+
+@main.command()
+@click.argument('domain')
+@click.option('--size', '-s', default=10, help='Number of results to return (max: 100)')
+@click.option('--from', 'from_offset', default=0, help='Starting offset for pagination (Pro users only)')
+@click.option('--fields', help='Comma-separated list of fields to return')
+@click.option('--format', 'output_format', 
+              type=click.Choice(['table', 'json']), 
+              default='table', help='Output format (json=complete raw data, table=readable with simplified complex data)')
+@click.pass_context
+def infostealers(ctx, domain: str, size: int, from_offset: int, fields: Optional[str], output_format: str):
+    """Search infostealers index for compromised credentials by domain.
+    
+    DOMAIN: Domain to search for compromised credentials (e.g., example.com, bank-site.com)
+    
+    This command searches for:
+    - Direct domain matches in the domain field
+    - Email addresses with @domain in the username field
+    
+    Domains with hyphens are automatically quoted for proper search syntax.
+    
+    Examples:
+    \b
+    webamon infostealers example.com
+    webamon infostealers bank-site.com --size 50
+    webamon infostealers example.com --fields domain,username,password
+    webamon infostealers example.com --format json
+    """
+    config = ctx.obj['config']
+    client = ctx.obj['client']
+    
+    # Check if pagination is being used without API key
+    if from_offset > 0 and not config.api_key:
+        console.print("[yellow]Warning:[/yellow] Pagination is only available for Pro users with API keys")
+        console.print("Using free tier - pagination parameters will be ignored")
+        from_offset = 0
+    
+    # Check if size is being used without API key
+    if size > 10 and not config.api_key:
+        console.print("[yellow]Warning:[/yellow] Size parameter is only available for Pro users with API keys")
+        console.print("Using free tier - limiting to 10 results")
+        size = 10
+    
+    # Build Lucene query - quote domain if it contains hyphens
+    if '-' in domain:
+        quoted_domain = f'"{domain}"'
+    else:
+        quoted_domain = domain
+    
+    lucene_query = f'domain:{quoted_domain} OR username:@{domain}'
+    
+    try:
+        console.print(f"[dim]Searching infostealers for domain: {domain}[/dim]")
+        response = client.search_lucene(lucene_query, 'infostealers', fields=fields, size=size, from_offset=from_offset)
+        
+        if output_format == 'table':
+            if isinstance(response, list) and len(response) > 0:
+                # Process data for table display
+                processed_data, omitted_fields = _process_table_data(response)
+                
+                table = Table(title=f"Infostealers Results for: {domain}")
+                
+                # Get all unique keys for columns
+                all_keys = set()
+                for item in processed_data:
+                    all_keys.update(item.keys())
+                
+                # Add columns
+                for key in sorted(all_keys):
+                    table.add_column(key.replace('_', ' ').title(), style="cyan")
+                
+                # Add rows
+                for item in processed_data:
+                    row = []
+                    for key in sorted(all_keys):
+                        value = item.get(key, '')
+                        row.append(_format_table_value(value))
+                    table.add_row(*row)
+                
+                console.print(table)
+                
+                # Show omitted fields notice
+                if omitted_fields:
+                    console.print(f"\n[dim]ℹ️  Some complex data omitted in table view: {', '.join(omitted_fields)}[/dim]")
+                    console.print(f"[dim]   Use --format json to see all data[/dim]")
+                
+                # Show summary with pagination info
+                if isinstance(response, list):
+                    summary = f"[dim]Showing {len(response)} results"
+                    if len(response) == size and size < 100:
+                        summary += f" (use --size {min(size * 2, 100)} for more)"
+                    if from_offset > 0:
+                        summary += f" starting from offset {from_offset}"
+                    summary += "[/dim]"
+                    console.print(f"\n{summary}")
+            elif isinstance(response, list) and len(response) == 0:
+                console.print(f"[yellow]No compromised credentials found for domain: {domain}[/yellow]")
+                console.print("[dim]This domain appears clean in our infostealers database[/dim]")
+            else:
+                console.print_json(data=response)
+        else:
+            console.print_json(data=response)
+            
+    except Exception as e:
+        _format_error_message(e)
+        ctx.exit(1)
 
 
 @main.command()

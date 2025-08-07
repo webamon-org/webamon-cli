@@ -18,7 +18,7 @@ pip install webamon-cli
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/webamon-cli.git
+git clone https://github.com/webamon-org/webamon-cli.git
 cd webamon-cli
 ```
 

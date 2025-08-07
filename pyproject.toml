@@ -15,7 +15,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Information Technology",
     "Intended Audience :: System Administrators", 
-    "License :: OSI Approved :: Apache Software License",
     "Topic :: Security",
     "Topic :: Internet :: WWW/HTTP",
     "Topic :: System :: Networking :: Monitoring",

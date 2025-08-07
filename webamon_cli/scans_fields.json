@@ -1,0 +1,734 @@
+[
+  {
+    "name": "certificate.cipher",
+    "description": "TLS/SSL cipher suite used by the server"
+  },
+  {
+    "name": "certificate.domain_name", 
+    "description": "Domain name listed in the certificate"
+  },
+  {
+    "name": "certificate.issuer",
+    "description": "Organization that issued the TLS/SSL certificate"
+  },
+  {
+    "name": "certificate.key_exchange",
+    "description": "Key exchange algorithm used in TLS handshake"
+  },
+  {
+    "name": "certificate.key_exchange_group",
+    "description": "Elliptic curve or finite field group for key exchange"
+  },
+  {
+    "name": "certificate.mac",
+    "description": "Message Authentication Code algorithm"
+  },
+  {
+    "name": "certificate.protocol",
+    "description": "TLS/SSL protocol version (e.g., TLSv1.3)"
+  },
+  {
+    "name": "certificate.san_list",
+    "description": "Subject Alternative Names from certificate"
+  },
+  {
+    "name": "certificate.signature_algorithm",
+    "description": "Algorithm used to sign the certificate"
+  },
+  {
+    "name": "certificate.sub_domain",
+    "description": "Subdomain extracted from certificate"
+  },
+  {
+    "name": "certificate.subject_name",
+    "description": "Subject Distinguished Name from certificate"
+  },
+  {
+    "name": "certificate.tld",
+    "description": "Top-level domain from certificate"
+  },
+  {
+    "name": "certificate.valid_from",
+    "description": "Certificate validity start date epoch"
+  },
+  {
+    "name": "certificate.valid_from_utc",
+    "description": "Certificate validity start date in UTC"
+  },
+  {
+    "name": "certificate.valid_to",
+    "description": "Certificate expiry date epoch"
+  },
+  {
+    "name": "certificate.valid_to_utc",
+    "description": "Certificate expiry date in UTC"
+  },
+  {
+    "name": "changed",
+    "description": "Indicator if content has changed since last scan"
+  },
+  {
+    "name": "changes",
+    "description": "Details of changes detected"
+  },
+  {
+    "name": "completion_utc",
+    "description": "Scan completion timestamp in UTC"
+  },
+  {
+    "name": "cookie.domain",
+    "description": "Domain scope for HTTP cookie"
+  },
+  {
+    "name": "cookie.expires",
+    "description": "Cookie expiration date"
+  },
+  {
+    "name": "cookie.expiry",
+    "description": "Cookie expiry timestamp"
+  },
+  {
+    "name": "cookie.http_only",
+    "description": "Whether cookie is HTTP-only (not accessible via JavaScript)"
+  },
+  {
+    "name": "cookie.name",
+    "description": "HTTP cookie name"
+  },
+  {
+    "name": "cookie.path",
+    "description": "Path scope for HTTP cookie"
+  },
+  {
+    "name": "cookie.priority",
+    "description": "Cookie priority level"
+  },
+  {
+    "name": "cookie.same_site",
+    "description": "SameSite attribute value for cookie"
+  },
+  {
+    "name": "cookie.secure",
+    "description": "Whether cookie requires secure HTTPS connection"
+  },
+  {
+    "name": "cookie.session",
+    "description": "Whether cookie is a session cookie"
+  },
+  {
+    "name": "cookie.size",
+    "description": "Size of cookie in bytes"
+  },
+  {
+    "name": "cookie.sourcePort",
+    "description": "Source port that set the cookie"
+  },
+  {
+    "name": "cookie.sourceScheme",
+    "description": "URL scheme that set the cookie"
+  },
+  {
+    "name": "cookie.value",
+    "description": "HTTP cookie value"
+  },
+  {
+    "name": "date",
+    "description": "Scan date"
+  },
+  {
+    "name": "dom",
+    "description": "Document Object Model content from page"
+  },
+  {
+    "name": "domain.asn.name",
+    "description": "ASN name for domain's IP address"
+  },
+  {
+    "name": "domain.asn.network",
+    "description": "Network range for domain's ASN"
+  },
+  {
+    "name": "domain.asn.number",
+    "description": "Autonomous System Number for domain"
+  },
+  {
+    "name": "domain.certificate.cipher",
+    "description": "TLS cipher for domain certificate"
+  },
+  {
+    "name": "domain.certificate.domain_name",
+    "description": "Domain name in certificate for this domain"
+  },
+  {
+    "name": "domain.certificate.issuer",
+    "description": "Certificate issuer for this domain"
+  },
+  {
+    "name": "domain.certificate.key_exchange",
+    "description": "Key exchange algorithm for domain certificate"
+  },
+  {
+    "name": "domain.certificate.key_exchange_group",
+    "description": "Key exchange group for domain certificate"
+  },
+  {
+    "name": "domain.certificate.mac",
+    "description": "MAC algorithm for domain certificate"
+  },
+  {
+    "name": "domain.certificate.protocol",
+    "description": "TLS protocol version for domain"
+  },
+  {
+    "name": "domain.certificate.san_list",
+    "description": "Subject Alternative Names for domain certificate"
+  },
+  {
+    "name": "domain.certificate.signature_algorithm",
+    "description": "Signature algorithm for domain certificate"
+  },
+  {
+    "name": "domain.certificate.sub_domain",
+    "description": "Subdomain from domain certificate"
+  },
+  {
+    "name": "domain.certificate.subject_name",
+    "description": "Subject name from domain certificate"
+  },
+  {
+    "name": "domain.certificate.tld",
+    "description": "TLD from domain certificate"
+  },
+  {
+    "name": "domain.certificate.valid_from",
+    "description": "Domain certificate validity start date"
+  },
+  {
+    "name": "domain.certificate.valid_from_utc",
+    "description": "Domain certificate validity start date UTC"
+  },
+  {
+    "name": "domain.certificate.valid_to",
+    "description": "Domain certificate expiry date"
+  },
+  {
+    "name": "domain.certificate.valid_to_utc",
+    "description": "Domain certificate expiry date UTC"
+  },
+  {
+    "name": "domain.country.iso",
+    "description": "ISO country code for domain's server location"
+  },
+  {
+    "name": "domain.country.name",
+    "description": "Country name for domain's server location"
+  },
+  {
+    "name": "domain.dns.A",
+    "description": "DNS A records for domain (IPv4 addresses)"
+  },
+  {
+    "name": "domain.dns.AAAA",
+    "description": "DNS AAAA records for domain (IPv6 addresses)"
+  },
+  {
+    "name": "domain.dns.CNAME",
+    "description": "DNS CNAME records for domain"
+  },
+  {
+    "name": "domain.dns.MX",
+    "description": "DNS MX records for domain (mail servers)"
+  },
+  {
+    "name": "domain.dns.NS",
+    "description": "DNS NS records for domain (name servers)"
+  },
+  {
+    "name": "domain.dns.PTR",
+    "description": "DNS PTR records for domain (reverse lookup)"
+  },
+  {
+    "name": "domain.dns.SOA",
+    "description": "DNS SOA record for domain (start of authority)"
+  },
+  {
+    "name": "domain.dns.TXT",
+    "description": "DNS TXT records for domain"
+  },
+  {
+    "name": "domain.dns.a",
+    "description": "DNS A records (lowercase) for domain"
+  },
+  {
+    "name": "domain.dns.aaaa",
+    "description": "DNS AAAA records (lowercase) for domain"
+  },
+  {
+    "name": "domain.dns.cname",
+    "description": "DNS CNAME records (lowercase) for domain"
+  },
+  {
+    "name": "domain.dns.error",
+    "description": "DNS resolution errors for domain"
+  },
+  {
+    "name": "domain.dns.mx",
+    "description": "DNS MX records (lowercase) for domain"
+  },
+  {
+    "name": "domain.dns.ns",
+    "description": "DNS NS records (lowercase) for domain"
+  },
+  {
+    "name": "domain.dns.ptr",
+    "description": "DNS PTR records (lowercase) for domain"
+  },
+  {
+    "name": "domain.dns.soa",
+    "description": "DNS SOA record (lowercase) for domain"
+  },
+  {
+    "name": "domain.dns.txt",
+    "description": "DNS TXT records (lowercase) for domain"
+  },
+  {
+    "name": "domain.hosting_scripts",
+    "description": "Hosting/tracking scripts detected on domain"
+  },
+  {
+    "name": "domain.ip",
+    "description": "IP address resolved for domain"
+  },
+  {
+    "name": "domain.mime_type",
+    "description": "MIME type of content served by domain"
+  },
+  {
+    "name": "domain.name",
+    "description": "Fully qualified domain name"
+  },
+  {
+    "name": "domain.request.encoded_data_length",
+    "description": "Encoded data length for domain request"
+  },
+  {
+    "name": "domain.request.ip",
+    "description": "IP address for domain request"
+  },
+  {
+    "name": "domain.request.mime_type",
+    "description": "MIME type for domain request"
+  },
+  {
+    "name": "domain.request.response_code",
+    "description": "HTTP response code for domain request"
+  },
+  {
+    "name": "domain.request.url",
+    "description": "URL for domain request"
+  },
+  {
+    "name": "domain.request_count",
+    "description": "Number of HTTP requests made to domain"
+  },
+  {
+    "name": "domain.resource.mime_type",
+    "description": "MIME type of resources served by domain"
+  },
+  {
+    "name": "domain.resource.sha256",
+    "description": "SHA256 hash of resources from domain"
+  },
+  {
+    "name": "domain.resource.url",
+    "description": "URLs of resources served by domain"
+  },
+  {
+    "name": "domain.response_code",
+    "description": "HTTP response code from domain"
+  },
+  {
+    "name": "domain.root",
+    "description": "Root domain extracted from FQDN"
+  },
+  {
+    "name": "domain.server",
+    "description": "Server software/version reported by domain"
+  },
+  {
+    "name": "domain.sub_domain",
+    "description": "Subdomain portion of FQDN"
+  },
+  {
+    "name": "domain.tld",
+    "description": "Top-level domain portion"
+  },
+  {
+    "name": "domain.total_response_size",
+    "description": "Total size of HTTP responses from domain"
+  },
+  {
+    "name": "domain.whois",
+    "description": "WHOIS registration data for domain"
+  },
+  {
+    "name": "domain_name",
+    "description": "Domain name being scanned"
+  },
+  {
+    "name": "engine_id",
+    "description": "Scanning engine identifier"
+  },
+  {
+    "name": "errors.error",
+    "description": "Error messages encountered during scan"
+  },
+  {
+    "name": "errors.url",
+    "description": "URLs that generated errors during scan"
+  },
+  {
+    "name": "feed",
+    "description": "Data feed source for scan"
+  },
+  {
+    "name": "fingerprint.asn",
+    "description": "ASN fingerprint for scan target"
+  },
+  {
+    "name": "fingerprint.cookies",
+    "description": "Cookie fingerprint for scan target"
+  },
+  {
+    "name": "fingerprint.dom",
+    "description": "DOM fingerprint for scan target"
+  },
+  {
+    "name": "fingerprint.domains",
+    "description": "Domain fingerprint for scan target"
+  },
+  {
+    "name": "fingerprint.links",
+    "description": "Link fingerprint for scan target"
+  },
+  {
+    "name": "fingerprint.scan_fingerprint",
+    "description": "Overall scan fingerprint"
+  },
+  {
+    "name": "fingerprint.scripts",
+    "description": "Script fingerprint for scan target"
+  },
+  {
+    "name": "fingerprint.ssl",
+    "description": "SSL fingerprint for scan target"
+  },
+  {
+    "name": "fingerprint.tech",
+    "description": "Technology fingerprint for scan target"
+  },
+  {
+    "name": "hosting",
+    "description": "Hosting provider information"
+  },
+  {
+    "name": "ingestion_timestamp",
+    "description": "Timestamp when scan data was ingested"
+  },
+  {
+    "name": "meta.domain_count",
+    "description": "Number of domains found in scan"
+  },
+  {
+    "name": "meta.report_id",
+    "description": "Unique identifier for scan report"
+  },
+  {
+    "name": "meta.request_count",
+    "description": "Total number of HTTP requests in scan"
+  },
+  {
+    "name": "meta.risk_score",
+    "description": "Risk assessment score for scan target"
+  },
+  {
+    "name": "meta.script_count",
+    "description": "Number of scripts found in scan"
+  },
+  {
+    "name": "meta.submission",
+    "description": "Scan submission details"
+  },
+  {
+    "name": "meta.submission_url",
+    "description": "Original URL submitted for scanning"
+  },
+  {
+    "name": "meta.submission_utc",
+    "description": "Scan submission timestamp in UTC"
+  },
+  {
+    "name": "monitor",
+    "description": "Monitoring configuration for scan"
+  },
+  {
+    "name": "page_links",
+    "description": "Links found on scanned page"
+  },
+  {
+    "name": "page_scripts",
+    "description": "Scripts found on scanned page"
+  },
+  {
+    "name": "page_title",
+    "description": "HTML title of scanned page"
+  },
+  {
+    "name": "report_id",
+    "description": "Unique report identifier"
+  },
+  {
+    "name": "request.request.has_post_data",
+    "description": "Whether HTTP request included POST data"
+  },
+  {
+    "name": "request.request.headers.name",
+    "description": "HTTP request header names"
+  },
+  {
+    "name": "request.request.headers.value",
+    "description": "HTTP request header values"
+  },
+  {
+    "name": "request.request.method",
+    "description": "HTTP request method (GET, POST, etc.)"
+  },
+  {
+    "name": "request.request.post_data",
+    "description": "POST data sent in HTTP request"
+  },
+  {
+    "name": "request.request.post_data_entry.bytes",
+    "description": "Size of POST data in bytes"
+  },
+  {
+    "name": "request.request.referrer_policy",
+    "description": "Referrer policy for HTTP request"
+  },
+  {
+    "name": "request.request.url",
+    "description": "URL of HTTP request"
+  },
+  {
+    "name": "request.request.urlFragment",
+    "description": "URL fragment portion of request"
+  },
+  {
+    "name": "request.response.cacheStorageCacheName",
+    "description": "Cache storage name for response"
+  },
+  {
+    "name": "request.response.encoded_data_length",
+    "description": "Encoded length of HTTP response data"
+  },
+  {
+    "name": "request.response.headers.name",
+    "description": "HTTP response header names"
+  },
+  {
+    "name": "request.response.headers.value",
+    "description": "HTTP response header values"
+  },
+  {
+    "name": "request.response.ip",
+    "description": "IP address that sent HTTP response"
+  },
+  {
+    "name": "request.response.mime_type",
+    "description": "MIME type of HTTP response"
+  },
+  {
+    "name": "request.response.port",
+    "description": "Port number for HTTP response"
+  },
+  {
+    "name": "request.response.protocol",
+    "description": "Protocol used for HTTP response"
+  },
+  {
+    "name": "request.response.response_time",
+    "description": "Response time for HTTP request"
+  },
+  {
+    "name": "request.response.security_details.name",
+    "description": "Security detail names from response"
+  },
+  {
+    "name": "request.response.security_details.value",
+    "description": "Security detail values from response"
+  },
+  {
+    "name": "request.response.security_state",
+    "description": "Security state of HTTP response"
+  },
+  {
+    "name": "request.response.serviceWorkerResponseSource",
+    "description": "Service worker response source"
+  },
+  {
+    "name": "request.response.serviceWorkerRouterInfo.matchedSourceType",
+    "description": "Service worker router matched source type"
+  },
+  {
+    "name": "request.response.serviceWorkerRouterInfo.ruleIdMatched",
+    "description": "Service worker router rule ID matched"
+  },
+  {
+    "name": "request.response.status",
+    "description": "HTTP response status code"
+  },
+  {
+    "name": "request.response.status_text",
+    "description": "HTTP response status text"
+  },
+  {
+    "name": "request.response.url",
+    "description": "URL of HTTP response"
+  },
+  {
+    "name": "resolved_domain",
+    "description": "Domain name after DNS resolution"
+  },
+  {
+    "name": "resolved_sub_domain",
+    "description": "Subdomain after DNS resolution"
+  },
+  {
+    "name": "resolved_tld",
+    "description": "Top-level domain after DNS resolution"
+  },
+  {
+    "name": "resolved_url",
+    "description": "Final URL after redirects and resolution"
+  },
+  {
+    "name": "resource.mime_type",
+    "description": "MIME type of scanned resource"
+  },
+  {
+    "name": "resource.sha256",
+    "description": "SHA256 hash of scanned resource"
+  },
+  {
+    "name": "resource.url",
+    "description": "URL of scanned resource"
+  },
+  {
+    "name": "save_resources",
+    "description": "Whether resources were saved during scan"
+  },
+  {
+    "name": "scan_status",
+    "description": "Current status of scan"
+  },
+  {
+    "name": "scan_time",
+    "description": "Duration of scan execution"
+  },
+  {
+    "name": "server.asn.name",
+    "description": "ASN name for server"
+  },
+  {
+    "name": "server.asn.network",
+    "description": "Network range for server ASN"
+  },
+  {
+    "name": "server.asn.number",
+    "description": "Autonomous System Number for server"
+  },
+  {
+    "name": "server.country.iso",
+    "description": "ISO country code for server location"
+  },
+  {
+    "name": "server.country.name",
+    "description": "Country name for server location"
+  },
+  {
+    "name": "server.domain",
+    "description": "Domain associated with server"
+  },
+  {
+    "name": "server.hosting_scripts",
+    "description": "Hosting scripts detected on server"
+  },
+  {
+    "name": "server.ip",
+    "description": "IP address of server"
+  },
+  {
+    "name": "server.mime_type",
+    "description": "MIME type served by server"
+  },
+  {
+    "name": "server.resource.mime_type",
+    "description": "MIME type of resources served by server"
+  },
+  {
+    "name": "server.resource.sha256",
+    "description": "SHA256 hash of resources from server"
+  },
+  {
+    "name": "server.resource.url",
+    "description": "URLs of resources served by server"
+  },
+  {
+    "name": "server.response_code",
+    "description": "HTTP response code from server"
+  },
+  {
+    "name": "server.server",
+    "description": "Server software and version information"
+  },
+  {
+    "name": "server.total_response_size",
+    "description": "Total size of responses from server"
+  },
+  {
+    "name": "source",
+    "description": "Source of scan data"
+  },
+  {
+    "name": "sub_domain",
+    "description": "Subdomain portion of scanned target"
+  },
+  {
+    "name": "submission_url",
+    "description": "Original URL submitted for scanning"
+  },
+  {
+    "name": "submission_utc",
+    "description": "Scan submission timestamp in UTC"
+  },
+  {
+    "name": "tag",
+    "description": "Tags associated with scan"
+  },
+  {
+    "name": "technology.name",
+    "description": "Names of detected technologies"
+  },
+  {
+    "name": "technology.url",
+    "description": "URLs related to detected technologies"
+  },
+  {
+    "name": "threat_ai",
+    "description": "AI-based threat assessment results"
+  },
+  {
+    "name": "tld",
+    "description": "Top-level domain of scanned target"
+  }
+]

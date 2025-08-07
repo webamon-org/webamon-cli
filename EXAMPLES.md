@@ -7,13 +7,13 @@ This document provides practical examples of using the Webamon CLI tool.
 ### Understanding the RESULTS Argument
 
 **New:** For basic search (non-Lucene), RESULTS argument is now optional! 
-- **Default fields**: `page_title,domain,resolved_url,dom`
+- **Default fields**: `page_title,domain.name,resolved_url,dom`
 - **Custom fields**: Specify your own field list as before
 
 💡 **Search matches are highlighted with yellow background in table view.**
 
 ```bash
-# New: Simple syntax with default fields (page_title,domain,resolved_url,dom)
+# New: Simple syntax with default fields (page_title,domain.name,resolved_url,dom)
 webamon search example.com
 
 # Traditional: Custom fields  
@@ -23,22 +23,24 @@ webamon search example.com domain.name,resolved_url
 # RESULTS: Optional comma-separated list of fields (uses defaults if omitted)
 ```
 
+💡 **Discover Fields**: Use `webamon fields` to see all 700+ available fields!
+
 **Common RESULTS field combinations:**
 - `domain.name,resolved_url` - Domain info with URLs
 - `domain.name,resolved_url,page_title` - Add page titles
-- `domain.name,resolved_ip,scan_status` - Include IP and scan status
+- `domain.name,domain.ip,scan_status` - Include IP and scan status
 - `submission_url,scan_date,report_id` - Scan information
 
 ### 1. Basic Domain Search (Free Tier)
 ```bash
-# Search with default fields (page_title,domain,resolved_url,dom)
+# Search with default fields (page_title,domain.name,resolved_url,dom)
 webamon search example.com
 
 # Search with custom fields
 webamon search example.com domain.name,resolved_url,page_title
 
 # Search by IP address with custom fields
-webamon search 192.168.1.1 resolved_ip,domain.name,scan_status
+webamon search 192.168.1.1 domain.ip,domain.name,scan_status
 ```
 
 ### 2. Configure Pro API Access
@@ -84,6 +86,38 @@ webamon screenshot bf18c02d-ff0e-46a9-9a59-5b7b94fb27fb
 webamon screenshot bf18c02d-ff0e-46a9-9a59-5b7b94fb27fb --save screenshot.png
 ```
 
+### 6. Discover Available Fields
+```bash
+# Show all available scan fields (700+ fields!)
+webamon fields
+
+# Search for domain-related fields
+webamon fields --search domain
+
+# Find certificate fields
+webamon fields --category certificate
+
+# Get cookie-related fields
+webamon fields --category cookie
+
+# Search for fields containing "ip"
+webamon fields --search ip
+
+# Get simple list format (useful for scripting)
+webamon fields --search domain --format list
+
+# Export all fields to JSON
+webamon fields --format json > scan_fields.json
+```
+
+**Field Categories Include:**
+- `certificate.*` - TLS/SSL certificate data
+- `domain.*` - Domain and DNS information  
+- `cookie.*` - HTTP cookie details
+- `request.*` - HTTP request/response data
+- `scan_*` - Scan metadata and status
+- `page_*` - Web page content and metadata
+
 ## Advanced Examples
 
 ### Lucene Queries
@@ -95,7 +129,7 @@ webamon search --lucene 'domain.name:"bank*" AND scan_status:success' --index sc
 webamon search --lucene 'domain.name:"example.com"' --index domains --fields domain.name,page_title,report_id
 
 # Search by IP range
-webamon search --lucene 'resolved_ip:[192.168.1.0 TO 192.168.1.255]' --index scans
+webamon search --lucene 'domain.ip:[192.168.1.0 TO 192.168.1.255]' --index scans
 ```
 
 ### Pagination (Pro Tier)
@@ -433,4 +467,5 @@ webamon search --lucene 'domain.name:"bank*"' --index scans --from 100 --size 50
 5. **Lucene Syntax**: Learn Lucene query syntax for powerful searches
 6. **Error Handling**: Always check return codes in scripts
 7. **Configuration**: Use environment variables or config files for API keys
-8. **Field Selection**: Use default fields for quick searches, specify custom fields for targeted results
+8. **Field Discovery**: Use `webamon fields` to discover available fields before building queries
+9. **Field Selection**: Use default fields for quick searches, specify custom fields for targeted results

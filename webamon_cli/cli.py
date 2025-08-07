@@ -1,6 +1,9 @@
 """Main CLI module for Webamon CLI tool."""
 
+import json
+import time
 import click
+from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 from typing import Optional, List, Dict, Any, Tuple
@@ -9,6 +12,33 @@ from .client import WebamonClient
 from .config import Config
 
 console = Console()
+
+
+def _load_scan_fields() -> List[Dict[str, str]]:
+    """Load scan fields from the included JSON file."""
+    try:
+        fields_file = Path(__file__).parent / "scans_fields.json"
+        with open(fields_file, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+
+
+def _format_error_message(error: Exception) -> None:
+    """Format and display error messages with better formatting for multi-line errors."""
+    error_msg = str(error)
+    if '\n' in error_msg:
+        # Multi-line error (like quota messages) - format nicely
+        lines = error_msg.split('\n')
+        console.print(f"[red]Error:[/red] {lines[0]}")
+        for line in lines[1:]:
+            if line.strip():
+                if 'https://' in line:
+                    console.print(f"[blue]{line.strip()}[/blue]")
+                else:
+                    console.print(f"[yellow]{line.strip()}[/yellow]")
+    else:
+        console.print(f"[red]Error:[/red] {error_msg}")
 
 
 def _highlight_search_marks(text: str) -> str:
@@ -185,8 +215,81 @@ def status(ctx):
         console.print("[dim]The Google of Threat Intelligence[/dim]")
             
     except Exception as e:
-        console.print(f"[red]✗[/red] Failed to connect: {e}")
+        console.print("[red]✗[/red] Failed to connect:")
+        _format_error_message(e)
         ctx.exit(1)
+
+
+@main.command()
+@click.option('--search', '-s', help='Filter fields by name (case-insensitive)')
+@click.option('--category', '-c', help='Filter by category (e.g., "certificate", "domain", "cookie")')
+@click.option('--format', 'output_format', 
+              type=click.Choice(['table', 'json', 'list']), 
+              default='table', help='Output format')
+@click.pass_context
+def fields(ctx, search: Optional[str], category: Optional[str], output_format: str):
+    """Show available scan fields with descriptions.
+    
+    Use this command to discover what fields you can use with --fields or RESULTS arguments.
+    
+    Examples:
+    \b
+    webamon fields                           # Show all fields
+    webamon fields --search domain          # Fields containing "domain"
+    webamon fields --category certificate   # Certificate-related fields
+    webamon fields --format json            # JSON output
+    webamon fields --search title --format list  # Simple list format
+    """
+    fields_data = _load_scan_fields()
+    
+    if not fields_data:
+        console.print("[red]Error:[/red] Could not load scan fields data")
+        ctx.exit(1)
+    
+    # Filter fields based on search and category
+    filtered_fields = fields_data
+    
+    if search:
+        search_lower = search.lower()
+        filtered_fields = [
+            field for field in filtered_fields 
+            if search_lower in field['name'].lower() or search_lower in field['description'].lower()
+        ]
+    
+    if category:
+        category_lower = category.lower()
+        filtered_fields = [
+            field for field in filtered_fields 
+            if field['name'].lower().startswith(category_lower + '.')
+        ]
+    
+    if not filtered_fields:
+        console.print(f"[yellow]No fields found matching criteria[/yellow]")
+        if search:
+            console.print(f"Search: '{search}'")
+        if category:
+            console.print(f"Category: '{category}'")
+        return
+    
+    # Display results
+    if output_format == 'json':
+        console.print_json(data=filtered_fields)
+    elif output_format == 'list':
+        for field in filtered_fields:
+            console.print(field['name'])
+    else:  # table format
+        table = Table(title=f"Available Scan Fields ({len(filtered_fields)} found)")
+        table.add_column("Field Name", style="cyan", no_wrap=True)
+        table.add_column("Description", style="white")
+        
+        for field in filtered_fields:
+            table.add_row(field['name'], field['description'])
+        
+        console.print(table)
+        
+        # Show usage hints
+        console.print(f"\n[dim]💡 Usage: webamon search example.com field1,field2,field3[/dim]")
+        console.print(f"[dim]💡 Lucene: webamon search --lucene 'field:value' --index scans --fields field1,field2[/dim]")
 
 
 @main.command()
@@ -241,7 +344,7 @@ def search(ctx, search_term: str, results: Optional[str], size: int, from_offset
     
     # Set default RESULTS for non-Lucene searches if not provided
     if not lucene and not results:
-        results = "page_title,domain,resolved_url,dom"
+        results = "page_title,domain.name,resolved_url,dom"
     
     # Check if pagination is being used without API key
     if from_offset > 0 and not config.api_key:
@@ -354,7 +457,7 @@ def search(ctx, search_term: str, results: Optional[str], size: int, from_offset
                 console.print_json(data=response)
             
     except Exception as e:
-        console.print(f"[red]Error:[/red] {e}")
+        _format_error_message(e)
         ctx.exit(1)
 
 
@@ -432,7 +535,7 @@ def report(ctx, report_id: str, output_format: str):
                 console.print("[dim]Make sure the report ID is correct and the scan has completed[/dim]")
             
     except Exception as e:
-        console.print(f"[red]Error:[/red] {e}")
+        _format_error_message(e)
         ctx.exit(1)
 
 
@@ -500,6 +603,9 @@ def scan(ctx, url: str, output_format: str, fetch_report: bool):
             console.print("[dim]" + "="*60 + "[/dim]")
             
             try:
+                # Silent delay to allow backend processing
+                time.sleep(4)
+                
                 # Call the report functionality directly
                 report_response = client.search_lucene(f'report_id:"{report_id}"', 'scans', size=1)
                 
@@ -515,7 +621,7 @@ def scan(ctx, url: str, output_format: str, fetch_report: bool):
             console.print("\n[yellow]Warning:[/yellow] --fetch-report flag used but no report_id found in scan response")
             
     except Exception as e:
-        console.print(f"[red]Error:[/red] {e}")
+        _format_error_message(e)
         ctx.exit(1)
 
 
@@ -567,7 +673,7 @@ def screenshot(ctx, report_id: str, save: Optional[str], output_format: str):
                 console.print_json(data=response)
             
     except Exception as e:
-        console.print(f"[red]Error:[/red] {e}")
+        _format_error_message(e)
         ctx.exit(1)
 
 

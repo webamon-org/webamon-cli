@@ -31,7 +31,7 @@ pip install .
 
 1. **Start using immediately (no configuration needed for basic searches):**
 ```bash
-webamon search example.com
+webamon search apk
 ```
 
 2. **Configure API key for pro features (optional):**
@@ -93,7 +93,7 @@ Search the Webamon database:
 The basic search requires a `SEARCH_TERM` and optionally `RESULTS`.
 - `SEARCH_TERM`: What you're searching for (domain, IP, URL, hash, etc.)
 - `RESULTS`: Comma-separated list of fields to search within and return
-  - **Default fields**: `page_title,domain,resolved_url,dom`
+  - **Default fields**: `page_title,domain.name,resolved_url,dom`
   - **Custom fields**: Specify your own field list
 
 💡 **Search matches are highlighted with yellow background in table view.**
@@ -183,6 +183,22 @@ webamon status
 webamon status --verbose
 ```
 
+#### Fields
+Discover available scan fields:
+```bash
+# Show all available fields
+webamon fields
+
+# Search for specific fields
+webamon fields --search domain
+
+# Show fields by category
+webamon fields --category certificate
+
+# Get fields as a simple list
+webamon fields --search ip --format list
+```
+
 ### Global Options
 
 - `--api-key`: Override API key  
@@ -218,6 +234,25 @@ done
 ```
 
 
+
+## Quotas and Pricing
+
+### Free Tier
+- **20 daily API calls**
+- **10 results per response**
+- Basic search functionality
+- Limited infostealer data access
+
+### Pro Plans
+When you hit the daily quota, the CLI will suggest upgrading to Pro for expanded access:
+
+- **Founding Analyst**: 1,000+ daily calls, up to 100 results per response
+- **Enterprise**: 10,000+ daily calls, up to 500 results per response
+- **All plans**: Complete infostealer data access, pagination, priority support
+
+For current pricing and features, visit: https://webamon.com/pricing
+
+If you exceed your quota, you'll see a helpful error message with upgrade information.
 
 ## Configuration File Format
 

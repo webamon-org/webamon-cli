@@ -10,8 +10,7 @@ class Config:
     """Configuration class for storing API settings."""
     
     def __init__(self, 
-                 api_key: Optional[str] = None,
-                 verbose: bool = False):
+                 api_key: Optional[str] = None):
         """Initialize configuration."""
         self.api_key = api_key or os.getenv('WEBAMON_API_KEY')
         
@@ -20,8 +19,6 @@ class Config:
             self.api_url = 'https://pro.webamon.com'
         else:
             self.api_url = 'https://search.webamon.com'
-            
-        self.verbose = verbose
     
     @classmethod
     def load(cls, config_file: Optional[str] = None) -> 'Config':
@@ -44,8 +41,7 @@ class Config:
                 pass
         
         return cls(
-            api_key=config_data.get('api_key'),
-            verbose=config_data.get('verbose', False)
+            api_key=config_data.get('api_key')
         )
     
     def save(self, config_file: Optional[str] = None) -> None:
@@ -58,8 +54,7 @@ class Config:
             config_path = config_dir / 'config.json'
         
         config_data = {
-            'api_key': self.api_key,
-            'verbose': self.verbose
+            'api_key': self.api_key
         }
         
         # Create parent directory if it doesn't exist

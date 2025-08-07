@@ -194,6 +194,45 @@ def _export_to_file(data: List[Dict[str, Any]], filename: str, format_type: str,
         console.print(f"[red]Error exporting to file:[/red] {e}")
 
 
+def _generate_pagination_commands(search_term: str, results: Optional[str], pagination: Dict[str, Any], 
+                                lucene: bool = False, index: Optional[str] = None, 
+                                fields: Optional[str] = None, output_format: str = 'table',
+                                export: Optional[str] = None) -> List[str]:
+    """Generate next/previous pagination command suggestions."""
+    commands = []
+    
+    # Base command construction
+    if lucene:
+        base_cmd = f'webamon search --lucene "{search_term}" --index {index}'
+    else:
+        base_cmd = f'webamon search "{search_term}"'
+        if results:
+            base_cmd += f' "{results}"'
+    
+    # Add common options
+    if fields:
+        base_cmd += f' --fields {fields}'
+    if output_format != 'table':
+        base_cmd += f' --format {output_format}'
+    if export:
+        base_cmd += f' --export {export}'
+    
+    # Add navigation commands
+    if pagination.get('prev_from') is not None:
+        prev_from = pagination['prev_from']
+        size = pagination.get('size', 10)
+        prev_cmd = f'{base_cmd} --from {prev_from} --size {size}'
+        commands.append(f"◀ Previous: {prev_cmd}")
+    
+    if pagination.get('has_more') and pagination.get('next_from') is not None:
+        next_from = pagination['next_from']
+        size = pagination.get('size', 10)
+        next_cmd = f'{base_cmd} --from {next_from} --size {size}'
+        commands.append(f"▶ Next: {next_cmd}")
+    
+    return commands
+
+
 def _process_table_data(data: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], List[str]]:
     """Process data for table display, handling nested structures intelligently."""
     if not data:
@@ -291,14 +330,24 @@ def status(ctx):
     client = ctx.obj['client']
     config = ctx.obj['config']
     
+    # Show which API endpoint we're attempting to connect to
+    api_tier = "Pro" if config.api_key else "Free"
+    console.print(f"[cyan]Checking {api_tier} API:[/cyan] {config.api_url}")
+    
     try:
         test_result = client.test_connection()
         
-        console.print("[green]Webamon Search API is accessible[/green]")
+        console.print("[green]✓ Webamon Search API is accessible[/green]")
         console.print("[dim]The Google of Threat Intelligence[/dim]")
+        
+        # Show additional tier information
+        if config.api_key:
+            console.print("[dim]✓ API key configured - Pro features available[/dim]")
+        else:
+            console.print("[dim]ℹ️  Free tier (20 queries/day) - Add API key for Pro features[/dim]")
             
     except Exception as e:
-        console.print("[red]✗[/red] Failed to connect:")
+        console.print(f"[red]✗ Failed to connect to {config.api_url}:[/red]")
         _format_error_message(e)
         ctx.exit(1)
 
@@ -438,11 +487,27 @@ def infostealers(ctx, domain: str, size: int, from_offset: int, fields: Optional
         response = client.search_lucene(lucene_query, 'infostealers', fields=fields, size=size, from_offset=from_offset)
         
         if output_format == 'table':
-            if isinstance(response, list) and len(response) > 0:
+            # Handle response structure (dict with results/pagination or just list)
+            data = response.get('results', response) if isinstance(response, dict) else response
+            pagination = response.get('pagination') if isinstance(response, dict) else None
+            total_hits = response.get('total_hits') if isinstance(response, dict) else None
+            
+            if isinstance(data, list) and len(data) > 0:
                 # Process data for table display
-                processed_data, omitted_fields = _process_table_data(response)
+                processed_data, omitted_fields = _process_table_data(data)
                 
-                table = Table(title=f"Infostealers Results for: {domain}")
+                # Create title with pagination info
+                title = f"Infostealers Results for: {domain}"
+                if pagination and isinstance(pagination, dict):
+                    total = pagination.get('total')
+                    if total:
+                        title += f" ({total:,} total)"
+                elif total_hits is not None:
+                    title += f" ({total_hits:,} total matches)"
+                elif len(data) > 0:
+                    title += f" ({len(data)} results)"
+                
+                table = Table(title=title)
                 
                 # Get all unique keys for columns
                 all_keys = set()
@@ -451,7 +516,7 @@ def infostealers(ctx, domain: str, size: int, from_offset: int, fields: Optional
                 
                 # Add columns
                 for key in sorted(all_keys):
-                    table.add_column(key.replace('_', ' ').title(), style="cyan")
+                    table.add_column(key.replace('_', ' ').title(), style="cyan", overflow="fold")
                 
                 # Add rows
                 for item in processed_data:
@@ -465,37 +530,110 @@ def infostealers(ctx, domain: str, size: int, from_offset: int, fields: Optional
                 
                 # Show omitted fields notice
                 if omitted_fields:
-                    console.print(f"\n[dim]ℹ️  Some complex data omitted in table view: {', '.join(omitted_fields)}[/dim]")
-                    console.print(f"[dim]   Use --format json to see all data[/dim]")
+                    console.print(f"\n[yellow]Note:[/yellow] Complex fields omitted from table view: {', '.join(omitted_fields)}")
+                    console.print("[dim]Use --format json to see all fields[/dim]")
                 
-                # Show summary with pagination info
-                if isinstance(response, list):
-                    summary = f"[dim]Showing {len(response)} results"
-                    if len(response) == size and size < 100:
+                # Show enhanced summary with pagination info
+                if pagination and isinstance(pagination, dict):
+                    total = pagination.get('total')
+                    from_pos = pagination.get('from', from_offset)
+                    size_val = pagination.get('size', size)
+                    has_more = pagination.get('has_more', False)
+                    next_from = pagination.get('next_from')
+                    prev_from = pagination.get('prev_from')
+                    
+                    summary = f"[dim]Showing {len(data)} results"
+                    if total:
+                        summary += f" of {total:,} total"
+                    if from_pos is not None:
+                        summary += f" (from position {from_pos:,})"
+                    summary += "[/dim]"
+                    console.print(f"\n{summary}")
+                    
+                    # Show enhanced pagination navigation with copy-paste commands
+                    if prev_from is not None or (has_more and next_from is not None):
+                        console.print(f"\n[cyan]📄 Pagination Navigation:[/cyan]")
+                        
+                        # Generate complete commands for copy-paste
+                        pagination_commands = _generate_pagination_commands(
+                            f'domain:\"{domain}\" OR username:@{domain}', None, pagination, 
+                            True, 'infostealers', fields, output_format, export
+                        )
+                        
+                        # For infostealers, we need to construct the commands differently
+                        infostealers_commands = []
+                        if pagination.get('prev_from') is not None:
+                            prev_from = pagination['prev_from']
+                            size = pagination.get('size', 10)
+                            base_cmd = f'webamon infostealers "{domain}"'
+                            if fields:
+                                base_cmd += f' --fields {fields}'
+                            if output_format != 'table':
+                                base_cmd += f' --format {output_format}'
+                            if export:
+                                base_cmd += f' --export {export}'
+                            prev_cmd = f'{base_cmd} --from {prev_from} --size {size}'
+                            infostealers_commands.append(f"◀ Previous: {prev_cmd}")
+                        
+                        if pagination.get('has_more') and pagination.get('next_from') is not None:
+                            next_from = pagination['next_from']
+                            size = pagination.get('size', 10)
+                            base_cmd = f'webamon infostealers "{domain}"'
+                            if fields:
+                                base_cmd += f' --fields {fields}'
+                            if output_format != 'table':
+                                base_cmd += f' --format {output_format}'
+                            if export:
+                                base_cmd += f' --export {export}'
+                            next_cmd = f'{base_cmd} --from {next_from} --size {size}'
+                            infostealers_commands.append(f"▶ Next: {next_cmd}")
+                        
+                        for cmd in infostealers_commands:
+                            console.print(f"[dim]{cmd}[/dim]")
+                        
+                        # Also show the short format for reference
+                        nav_hints = []
+                        if prev_from is not None and prev_from >= 0:
+                            nav_hints.append(f"--from {prev_from} --size {size_val}")
+                        if has_more and next_from is not None:
+                            nav_hints.append(f"--from {next_from} --size {size_val}")
+                        
+                        if nav_hints:
+                            console.print(f"[dim]Quick options: {' | '.join(nav_hints)}[/dim]")
+                else:
+                    # Fallback summary without pagination
+                    summary = f"[dim]Showing {len(data)} results"
+                    if len(data) == size and size < 100:
                         summary += f" (use --size {min(size * 2, 100)} for more)"
                     if from_offset > 0:
                         summary += f" starting from offset {from_offset}"
                     summary += "[/dim]"
                     console.print(f"\n{summary}")
-                    
+                
                 # Handle export for table format
                 if export:
                     title = f"Infostealers Results for: {domain}"
-                    _export_to_file(response, export, 'table', title)
+                    _export_to_file(data, export, 'table', title)
                     
-            elif isinstance(response, list) and len(response) == 0:
+            elif isinstance(data, list) and len(data) == 0:
                 console.print(f"[yellow]No compromised credentials found for domain: {domain}[/yellow]")
                 console.print("[dim]This domain appears clean in our infostealers database[/dim]")
             else:
+                # Fallback for unexpected data structure in table format
+                console.print(f"[yellow]Unexpected data format for table display[/yellow]")
+                console.print(f"[dim]Data type: {type(response)}[/dim]")
                 console.print_json(data=response)
         elif output_format == 'csv':
-            if isinstance(response, list) and len(response) > 0:
+            # Handle response structure (dict with results/pagination or just list)
+            data = response.get('results', response) if isinstance(response, dict) else response
+            
+            if isinstance(data, list) and len(data) > 0:
                 title = f"Infostealers Results for: {domain}"
                 console.print(f"[dim]CSV format - showing first few rows as table preview[/dim]")
                 
                 # Get all unique keys
                 all_keys = set()
-                for item in response:
+                for item in data:
                     all_keys.update(item.keys())
                 fieldnames = sorted(all_keys)
                 
@@ -505,7 +643,7 @@ def infostealers(ctx, domain: str, size: int, from_offset: int, fields: Optional
                     table.add_column(key.replace('_', ' ').title(), style="cyan")
                 
                 # Show first 5 rows
-                preview_data = response[:5]
+                preview_data = data[:5]
                 for item in preview_data:
                     row = []
                     for key in fieldnames:
@@ -518,15 +656,16 @@ def infostealers(ctx, domain: str, size: int, from_offset: int, fields: Optional
                 
                 console.print(table)
                 
-                if len(response) > 5:
-                    console.print(f"[dim]... and {len(response) - 5} more rows[/dim]")
+                if len(data) > 5:
+                    console.print(f"[dim]... and {len(data) - 5} more rows[/dim]")
                 
                 # Export CSV
                 if export:
-                    _export_to_file(response, export, 'csv', title)
+                    _export_to_file(data, export, 'csv', title)
                 else:
                     filename = f"infostealers_{domain.replace('.', '_')}"
-                    _export_to_file(response, filename, 'csv', title)
+                    console.print(f"[dim]Auto-exporting CSV to: {filename}.csv[/dim]")
+                    _export_to_file(data, filename, 'csv', title)
             else:
                 console.print(f"[yellow]No compromised credentials found for domain: {domain}[/yellow]")
                 
@@ -534,9 +673,12 @@ def infostealers(ctx, domain: str, size: int, from_offset: int, fields: Optional
             console.print_json(data=response)
             
             # Handle export for JSON format
-            if export and isinstance(response, list):
-                title = f"Infostealers Results for: {domain}"
-                _export_to_file(response, export, 'json', title)
+            if export:
+                # Extract data for export
+                data = response.get('results', response) if isinstance(response, dict) else response
+                if isinstance(data, list):
+                    title = f"Infostealers Results for: {domain}"
+                    _export_to_file(data, export, 'json', title)
             
     except Exception as e:
         _format_error_message(e)
@@ -630,23 +772,24 @@ def search(ctx, search_term: str, results: Optional[str], size: int, from_offset
                 total_hits = response.get('total_hits')
                 pagination = response.get('pagination')
             
-            if isinstance(data, list) and data:
-                # Create title with pagination info if available
-                title = f"Search Results for '{search_term}'"
-                if pagination and isinstance(pagination, dict):
-                    total = pagination.get('total', total_hits)
-                    from_pos = pagination.get('from', from_offset)
-                    if total and from_pos is not None:
-                        title += f" ({total:,} total, from {from_pos:,})"
-                    elif total:
-                        title += f" ({total:,} total)"
-                elif total_hits is not None:
-                    title += f" ({total_hits:,} total matches)"
-                
-                table = Table(title=title)
-                
-                # Process and filter data for better table display
-                processed_data, omitted_fields = _process_table_data(data)
+            # Create title with pagination info if available (used by all formats)
+            title = f"Search Results for '{search_term}'"
+            if pagination and isinstance(pagination, dict):
+                total = pagination.get('total', total_hits)
+                from_pos = pagination.get('from', from_offset)
+                if total and from_pos is not None:
+                    title += f" ({total:,} total, from {from_pos:,})"
+                elif total:
+                    title += f" ({total:,} total)"
+            elif total_hits is not None:
+                title += f" ({total_hits:,} total matches)"
+            
+            if output_format == 'table':
+                if isinstance(data, list) and data:
+                    table = Table(title=title)
+                    
+                    # Process and filter data for better table display
+                    processed_data, omitted_fields = _process_table_data(data)
                 
                 # Add columns based on processed data
                 if processed_data:
@@ -685,19 +828,30 @@ def search(ctx, search_term: str, results: Optional[str], size: int, from_offset
                     summary += "[/dim]"
                     console.print(f"\n{summary}")
                     
-                    # Show pagination navigation hints using from/size
-                    nav_hints = []
-                    if prev_from is not None and prev_from >= 0:
-                        nav_hints.append(f"Previous: --from {prev_from} --size {size_val}")
-                    if has_more and next_from is not None:
-                        nav_hints.append(f"Next: --from {next_from} --size {size_val}")
-                    elif has_more and from_pos is not None:
-                        # Calculate next_from if not provided
-                        calculated_next = from_pos + size_val
-                        nav_hints.append(f"Next: --from {calculated_next} --size {size_val}")
-                    
-                    if nav_hints:
-                        console.print(f"[dim]Navigation: {' | '.join(nav_hints)}[/dim]")
+                    # Show enhanced pagination navigation with copy-paste commands
+                    if prev_from is not None or (has_more and next_from is not None):
+                        console.print(f"\n[cyan]📄 Pagination Navigation:[/cyan]")
+                        
+                        # Generate complete commands for copy-paste
+                        pagination_commands = _generate_pagination_commands(
+                            search_term, results, pagination, lucene, index, fields, output_format, export
+                        )
+                        
+                        for cmd in pagination_commands:
+                            console.print(f"[dim]{cmd}[/dim]")
+                        
+                        # Also show the short format for reference
+                        nav_hints = []
+                        if prev_from is not None and prev_from >= 0:
+                            nav_hints.append(f"--from {prev_from} --size {size_val}")
+                        if has_more and next_from is not None:
+                            nav_hints.append(f"--from {next_from} --size {size_val}")
+                        elif has_more and from_pos is not None:
+                            calculated_next = from_pos + size_val
+                            nav_hints.append(f"--from {calculated_next} --size {size_val}")
+                        
+                        if nav_hints:
+                            console.print(f"[dim]Quick options: {' | '.join(nav_hints)}[/dim]")
                 else:
                     # Fallback summary without pagination
                     summary = f"[dim]Showing {len(data)} results"
@@ -705,7 +859,7 @@ def search(ctx, search_term: str, results: Optional[str], size: int, from_offset
                         summary += f" of {total_hits:,} total matches"
                     summary += "[/dim]"
                     console.print(f"\n{summary}")
-                    
+                
                 # Handle export for table format
                 if export and isinstance(data, list):
                     _export_to_file(data, export, 'table', title)
@@ -744,12 +898,13 @@ def search(ctx, search_term: str, results: Optional[str], size: int, from_offset
                     if len(data) > 5:
                         console.print(f"[dim]... and {len(data) - 5} more rows[/dim]")
                     
-                    # Always export CSV to file
+                    # Always export CSV to file when using CSV format
                     if export:
                         _export_to_file(data, export, 'csv', title)
                     else:
                         # Auto-export CSV if no filename specified
-                        filename = f"webamon_search_{search_term.replace(' ', '_')}"
+                        filename = f"webamon_search_{search_term.replace(' ', '_').replace('/', '_')}"
+                        console.print(f"[dim]Auto-exporting CSV to: {filename}.csv[/dim]")
                         _export_to_file(data, filename, 'csv', title)
                         
                 else:

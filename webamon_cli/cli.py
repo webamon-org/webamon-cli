@@ -1,5 +1,6 @@
 """Main CLI module for Webamon CLI tool."""
 
+import csv
 import json
 import time
 import click
@@ -118,6 +119,79 @@ def _format_table_value(value: Any) -> str:
         if len(str_value) > 50:
             return str_value[:47] + "..."
         return str_value
+
+
+def _export_to_file(data: List[Dict[str, Any]], filename: str, format_type: str, title: str = "Results") -> None:
+    """Export data to file in the specified format."""
+    try:
+        if format_type == 'json':
+            # Export as JSON
+            export_filename = filename if filename.endswith('.json') else f"{filename}.json"
+            with open(export_filename, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+        
+        elif format_type == 'csv':
+            # Export as CSV
+            export_filename = filename if filename.endswith('.csv') else f"{filename}.csv"
+            if data:
+                # Get all unique keys from all items
+                all_keys = set()
+                for item in data:
+                    all_keys.update(item.keys())
+                
+                fieldnames = sorted(all_keys)
+                
+                with open(export_filename, 'w', newline='', encoding='utf-8') as f:
+                    writer = csv.DictWriter(f, fieldnames=fieldnames)
+                    writer.writeheader()
+                    
+                    for item in data:
+                        # Flatten complex values for CSV
+                        row = {}
+                        for key in fieldnames:
+                            value = item.get(key, '')
+                            if isinstance(value, (list, dict)):
+                                row[key] = json.dumps(value) if value else ''
+                            else:
+                                row[key] = str(value) if value is not None else ''
+                        writer.writerow(row)
+        
+        elif format_type == 'table':
+            # Export as Markdown table
+            export_filename = filename if filename.endswith('.md') else f"{filename}.md"
+            
+            if data:
+                # Process data for table display
+                processed_data, _ = _process_table_data(data)
+                
+                # Get all unique keys
+                all_keys = set()
+                for item in processed_data:
+                    all_keys.update(item.keys())
+                
+                fieldnames = sorted(all_keys)
+                
+                with open(export_filename, 'w', encoding='utf-8') as f:
+                    f.write(f"# {title}\n\n")
+                    
+                    # Write markdown table header
+                    f.write("| " + " | ".join(fieldnames) + " |\n")
+                    f.write("| " + " | ".join(["---"] * len(fieldnames)) + " |\n")
+                    
+                    # Write data rows
+                    for item in processed_data:
+                        row_values = []
+                        for key in fieldnames:
+                            value = item.get(key, '')
+                            # Clean value for markdown (remove pipes and newlines)
+                            clean_value = str(value).replace('|', '\\|').replace('\n', ' ').replace('\r', '')
+                            row_values.append(clean_value)
+                        f.write("| " + " | ".join(row_values) + " |\n")
+        
+        console.print(f"[green]✓[/green] Exported {len(data)} results to: [cyan]{export_filename}[/cyan]")
+        
+    except Exception as e:
+        console.print(f"[red]Error exporting to file:[/red] {e}")
 
 
 def _process_table_data(data: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], List[str]]:
@@ -314,10 +388,11 @@ def fields(ctx, search: Optional[str], category: Optional[str], output_format: s
 @click.option('--from', 'from_offset', default=0, help='Starting offset for pagination (Pro users only)')
 @click.option('--fields', help='Comma-separated list of fields to return')
 @click.option('--format', 'output_format', 
-              type=click.Choice(['table', 'json']), 
-              default='table', help='Output format (json=complete raw data, table=readable with simplified complex data)')
+              type=click.Choice(['table', 'json', 'csv']), 
+              default='table', help='Output format (json=complete raw data, table=readable with simplified complex data, csv=comma-separated values)')
+@click.option('--export', '-o', help='Export results to file (format: json→.json, table→.md, csv→.csv)')
 @click.pass_context
-def infostealers(ctx, domain: str, size: int, from_offset: int, fields: Optional[str], output_format: str):
+def infostealers(ctx, domain: str, size: int, from_offset: int, fields: Optional[str], output_format: str, export: Optional[str]):
     """Search infostealers index for compromised credentials by domain.
     
     DOMAIN: Domain to search for compromised credentials (e.g., example.com, bank-site.com)
@@ -402,13 +477,66 @@ def infostealers(ctx, domain: str, size: int, from_offset: int, fields: Optional
                         summary += f" starting from offset {from_offset}"
                     summary += "[/dim]"
                     console.print(f"\n{summary}")
+                    
+                # Handle export for table format
+                if export:
+                    title = f"Infostealers Results for: {domain}"
+                    _export_to_file(response, export, 'table', title)
+                    
             elif isinstance(response, list) and len(response) == 0:
                 console.print(f"[yellow]No compromised credentials found for domain: {domain}[/yellow]")
                 console.print("[dim]This domain appears clean in our infostealers database[/dim]")
             else:
                 console.print_json(data=response)
-        else:
+        elif output_format == 'csv':
+            if isinstance(response, list) and len(response) > 0:
+                title = f"Infostealers Results for: {domain}"
+                console.print(f"[dim]CSV format - showing first few rows as table preview[/dim]")
+                
+                # Get all unique keys
+                all_keys = set()
+                for item in response:
+                    all_keys.update(item.keys())
+                fieldnames = sorted(all_keys)
+                
+                # Create table for preview
+                table = Table(title=f"CSV Preview: {title}")
+                for key in fieldnames:
+                    table.add_column(key.replace('_', ' ').title(), style="cyan")
+                
+                # Show first 5 rows
+                preview_data = response[:5]
+                for item in preview_data:
+                    row = []
+                    for key in fieldnames:
+                        value = item.get(key, '')
+                        if isinstance(value, (list, dict)):
+                            row.append(json.dumps(value) if value else '')
+                        else:
+                            row.append(str(value) if value is not None else '')
+                    table.add_row(*row)
+                
+                console.print(table)
+                
+                if len(response) > 5:
+                    console.print(f"[dim]... and {len(response) - 5} more rows[/dim]")
+                
+                # Export CSV
+                if export:
+                    _export_to_file(response, export, 'csv', title)
+                else:
+                    filename = f"infostealers_{domain.replace('.', '_')}"
+                    _export_to_file(response, filename, 'csv', title)
+            else:
+                console.print(f"[yellow]No compromised credentials found for domain: {domain}[/yellow]")
+                
+        else:  # json format
             console.print_json(data=response)
+            
+            # Handle export for JSON format
+            if export and isinstance(response, list):
+                title = f"Infostealers Results for: {domain}"
+                _export_to_file(response, export, 'json', title)
             
     except Exception as e:
         _format_error_message(e)
@@ -424,11 +552,12 @@ def infostealers(ctx, domain: str, size: int, from_offset: int, fields: Optional
 @click.option('--index', help='Index to search (required for Lucene queries)')
 @click.option('--fields', help='Comma-separated list of fields to return')
 @click.option('--format', 'output_format', 
-              type=click.Choice(['table', 'json']), 
-              default='table', help='Output format (table=readable with simplified complex data, json=complete raw data)')
+              type=click.Choice(['table', 'json', 'csv']), 
+              default='table', help='Output format (table=readable with simplified complex data, json=complete raw data, csv=comma-separated values)')
+@click.option('--export', '-o', help='Export results to file (format: json→.json, table→.md, csv→.csv)')
 @click.pass_context
 def search(ctx, search_term: str, results: Optional[str], size: int, from_offset: int,
-           lucene: bool, index: Optional[str], fields: Optional[str], output_format: str):
+           lucene: bool, index: Optional[str], fields: Optional[str], output_format: str, export: Optional[str]):
     """Search the Webamon threat intelligence database.
     
     SEARCH_TERM: The search term (IP, domain, URL, hash, etc.)
@@ -576,8 +705,62 @@ def search(ctx, search_term: str, results: Optional[str], size: int, from_offset
                         summary += f" of {total_hits:,} total matches"
                     summary += "[/dim]"
                     console.print(f"\n{summary}")
-            else:
+                    
+                # Handle export for table format
+                if export and isinstance(data, list):
+                    _export_to_file(data, export, 'table', title)
+                    
+            elif output_format == 'csv':
+                # CSV output format
+                if isinstance(data, list) and data:
+                    # Display CSV data as table for console output
+                    console.print(f"[dim]CSV format - showing first few rows as table preview[/dim]")
+                    
+                    # Get all unique keys
+                    all_keys = set()
+                    for item in data:
+                        all_keys.update(item.keys())
+                    fieldnames = sorted(all_keys)
+                    
+                    # Create table for preview
+                    table = Table(title=f"CSV Preview: {title}")
+                    for key in fieldnames:
+                        table.add_column(key.replace('_', ' ').title(), style="cyan")
+                    
+                    # Show first 5 rows
+                    preview_data = data[:5]
+                    for item in preview_data:
+                        row = []
+                        for key in fieldnames:
+                            value = item.get(key, '')
+                            if isinstance(value, (list, dict)):
+                                row.append(json.dumps(value) if value else '')
+                            else:
+                                row.append(str(value) if value is not None else '')
+                        table.add_row(*row)
+                    
+                    console.print(table)
+                    
+                    if len(data) > 5:
+                        console.print(f"[dim]... and {len(data) - 5} more rows[/dim]")
+                    
+                    # Always export CSV to file
+                    if export:
+                        _export_to_file(data, export, 'csv', title)
+                    else:
+                        # Auto-export CSV if no filename specified
+                        filename = f"webamon_search_{search_term.replace(' ', '_')}"
+                        _export_to_file(data, filename, 'csv', title)
+                        
+                else:
+                    console.print("[yellow]No data to display in CSV format[/yellow]")
+                    
+            else:  # json format
                 console.print_json(data=response)
+                
+                # Handle export for JSON format
+                if export and isinstance(data, list):
+                    _export_to_file(data, export, 'json', title)
             
     except Exception as e:
         _format_error_message(e)

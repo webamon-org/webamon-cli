@@ -110,6 +110,14 @@ webamon search example.com domain.name,resolved_url,page_title
 
 # JSON output with default fields
 webamon search example.com --format json
+
+# CSV output (auto-exports to file)
+webamon search example.com --format csv
+
+# Export to custom file
+webamon search example.com --export results
+webamon search example.com --format json --export data.json
+webamon search example.com --format csv --export analysis.csv
 ```
 
 **Pagination (Pro Users Only):**
@@ -182,6 +190,13 @@ webamon infostealers example.com --fields domain,username,password
 
 # JSON output
 webamon infostealers example.com --format json
+
+# CSV output (auto-exports to file)
+webamon infostealers example.com --format csv
+
+# Export to custom file
+webamon infostealers example.com --export compromised_creds
+webamon infostealers example.com --format csv --export creds.csv
 ```
 
 #### Screenshot

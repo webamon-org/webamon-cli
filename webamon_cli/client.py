@@ -48,18 +48,11 @@ class WebamonClient:
         
         try:
             response = self.session.request(method, url, **kwargs)
-            response.raise_for_status()
             
-            # Handle empty responses
-            if response.status_code == 204 or not response.content:
-                return {}
-                
-            return response.json()
-            
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 401:
+            # Handle status codes before raise_for_status() to avoid retry complications
+            if response.status_code == 401:
                 raise WebamonAPIError("Authentication failed. Check your API key.")
-            elif e.response.status_code == 403:
+            elif response.status_code == 403:
                 if not self.config.api_key:
                     raise WebamonAPIError(
                         "Rate limit exceeded - you've hit the daily quota (20 queries/day for free tier).\n"
@@ -68,9 +61,9 @@ class WebamonClient:
                     )
                 else:
                     raise WebamonAPIError("Access forbidden. Check your permissions.")
-            elif e.response.status_code == 404:
+            elif response.status_code == 404:
                 raise WebamonAPIError("Resource not found.")
-            elif e.response.status_code == 429:
+            elif response.status_code == 429:
                 if not self.config.api_key:
                     raise WebamonAPIError(
                         "Rate limit exceeded - you've hit the daily quota (20 queries/day for free tier).\n"
@@ -82,40 +75,26 @@ class WebamonClient:
                         "Rate limit exceeded - you've hit your daily API quota.\n"
                         "Check your usage or upgrade your plan at: https://webamon.com/pricing"
                     )
-            else:
+            elif not response.ok:
+                # Handle other HTTP errors
                 try:
-                    error_data = e.response.json()
-                    message = error_data.get('message', str(e))
+                    error_data = response.json()
+                    message = error_data.get('message', f"HTTP {response.status_code} error")
                 except:
-                    message = str(e)
+                    message = f"HTTP {response.status_code} error"
                 raise WebamonAPIError(f"API error: {message}")
-                
-        except requests.exceptions.ConnectionError as e:
-            # Check if this might be a quota limit issue
-            error_str = str(e).lower()
-            # Look for specific quota-related error patterns
-            quota_keywords = [
-                'too many 429 error responses',
-                '429 error responses',
-                'max retries exceeded',
-                'connection pool',
-                'httpsconnectionpool'
-            ]
             
-            if any(keyword in error_str for keyword in quota_keywords):
-                if not self.config.api_key:
-                    raise WebamonAPIError(
-                        "Rate limit exceeded - you've hit the daily quota (20 queries/day for free tier).\n"
-                        "Upgrade to Pro for 1,000+ daily queries, larger response sizes, and premium features:\n"
-                        "https://webamon.com/pricing"
-                    )
-                else:
-                    raise WebamonAPIError(
-                        "Rate limit exceeded - you've hit your daily API quota.\n"
-                        "Check your usage or upgrade your plan at: https://webamon.com/pricing"
-                    )
-            else:
-                raise WebamonAPIError("Connection failed. Check your network and API URL.")
+            # Handle successful responses
+            if response.status_code == 204 or not response.content:
+                return {}
+                
+            return response.json()
+            
+        except WebamonAPIError:
+            # Re-raise our custom errors
+            raise
+        except requests.exceptions.ConnectionError:
+            raise WebamonAPIError("Connection failed. Check your network and API URL.")
         except requests.exceptions.Timeout:
             raise WebamonAPIError("Request timed out.")
         except requests.exceptions.RequestException as e:

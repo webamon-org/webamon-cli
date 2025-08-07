@@ -103,6 +103,14 @@ webamon infostealers example.com --fields domain,username,password,date
 # JSON output for processing
 webamon infostealers example.com --format json
 
+# CSV output (auto-exports to file)
+webamon infostealers example.com --format csv
+
+# Export options
+webamon infostealers example.com --export compromised_accounts
+webamon infostealers example.com --format csv --export security_audit.csv
+webamon infostealers example.com --format json --export raw_data.json
+
 # Pagination (Pro users only)
 webamon infostealers example.com --from 50 --size 25
 ```

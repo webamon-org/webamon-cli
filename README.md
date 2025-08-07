@@ -425,8 +425,20 @@ limitations under the License.
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
+
+- Setting up your development environment
+- Code style and testing requirements  
+- Submitting bug reports and feature requests
+- Pull request process and code review
+
+Quick start: Fork → Branch → Code → Test → Pull Request
+
+## Security
+
+Security is important to us. Please see [SECURITY.md](SECURITY.md) for:
+
+- Reporting security vulnerabilities
+- Security best practices for users
+- API key and data protection guidelines
+- Incident response procedures

@@ -11,6 +11,7 @@ from typing import Optional, List, Dict, Any, Tuple
 
 from .client import WebamonClient
 from .config import Config
+from . import __version__
 
 console = Console()
 
@@ -303,6 +304,7 @@ def _process_table_data(data: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]
 @click.group()
 @click.option('--api-key', help='API key for authentication')
 @click.option('--config-file', help='Path to config file')
+@click.version_option(version=__version__, prog_name='webamon')
 @click.pass_context
 def main(ctx, api_key: Optional[str], config_file: Optional[str]):
     """Webamon Search CLI - The Google of Threat Intelligence.

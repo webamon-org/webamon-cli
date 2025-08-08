@@ -160,18 +160,26 @@ Search the Webamon database:
 
 The basic search requires a `SEARCH_TERM` and optionally `RESULTS`.
 - `SEARCH_TERM`: What you're searching for (domain, IP, URL, hash, etc.)
-- `RESULTS`: Comma-separated list of fields to search within and return
-  - **Default fields**: `page_title,domain.name,resolved_url,dom`
-  - **Custom fields**: Specify your own field list
+- `RESULTS`: Comma-separated list of fields to search within
+  - **Default search fields**: `page_title,domain.name,resolved_url,dom`
+  - **Custom search fields**: Specify your own field list
+- `--fields`: Comma-separated list of fields to return (separate from search fields)
+  - **Default return fields**: Same as search fields when not specified
 
 💡 **Search matches are highlighted with yellow background in table view.**
 
 ```bash
-# Search with default fields (page_title,domain,resolved_url,dom)
+# Search with default search and return fields
 webamon search example.com
 
-# Search with custom fields
+# Search with custom search fields (returns same fields)
 webamon search example.com domain.name,resolved_url
+
+# Search with default search fields, custom return fields
+webamon search example.com --fields page_title,domain.name
+
+# Search with both custom search and return fields
+webamon search example.com tag --fields page_title,domain.name
 
 # Search with more fields
 webamon search example.com domain.name,resolved_url,page_title

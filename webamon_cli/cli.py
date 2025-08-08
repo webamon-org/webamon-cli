@@ -304,9 +304,10 @@ def _process_table_data(data: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]
 @click.group()
 @click.option('--api-key', help='API key for authentication')
 @click.option('--config-file', help='Path to config file')
+@click.option('-v', '--verbose', is_flag=True, help='Show request URL and response status code')
 @click.version_option(version=__version__, prog_name='webamon')
 @click.pass_context
-def main(ctx, api_key: Optional[str], config_file: Optional[str]):
+def main(ctx, api_key: Optional[str], config_file: Optional[str], verbose: bool):
     """Webamon Search CLI - The Google of Threat Intelligence.
     
     Search domains, scan websites, and retrieve screenshots using the Webamon API.
@@ -320,9 +321,10 @@ def main(ctx, api_key: Optional[str], config_file: Optional[str]):
     if api_key:
         config.api_key = api_key
     
-    # Store config and client in context
+    # Store config, verbose flag, and client in context
     ctx.obj['config'] = config
-    ctx.obj['client'] = WebamonClient(config)
+    ctx.obj['verbose'] = verbose
+    ctx.obj['client'] = WebamonClient(config, verbose=verbose)
 
 
 @main.command()
@@ -437,7 +439,7 @@ def fields(ctx, search: Optional[str], category: Optional[str], output_format: s
 @click.argument('domain')
 @click.option('--size', '-s', default=10, help='Number of results to return (max: 100)')
 @click.option('--from', 'from_offset', default=0, help='Starting offset for pagination (Pro users only)')
-@click.option('--fields', help='Comma-separated list of fields to return')
+@click.option('--fields', help='Comma-separated list of fields to return (separate from search fields)')
 @click.option('--format', 'output_format', 
               type=click.Choice(['table', 'json', 'csv']), 
               default='table', help='Output format (json=complete raw data, table=readable with simplified complex data, csv=comma-separated values)')
@@ -694,7 +696,7 @@ def infostealers(ctx, domain: str, size: int, from_offset: int, fields: Optional
 @click.option('--from', 'from_offset', default=0, help='Starting offset for pagination (Pro users only)')
 @click.option('--lucene', is_flag=True, help='Use Lucene query syntax')
 @click.option('--index', help='Index to search (required for Lucene queries)')
-@click.option('--fields', help='Comma-separated list of fields to return')
+@click.option('--fields', help='Comma-separated list of fields to return (separate from search fields)')
 @click.option('--format', 'output_format', 
               type=click.Choice(['table', 'json', 'csv']), 
               default='table', help='Output format (table=readable with simplified complex data, json=complete raw data, csv=comma-separated values)')
@@ -705,23 +707,29 @@ def search(ctx, search_term: str, results: Optional[str], size: int, from_offset
     """Search the Webamon threat intelligence database.
     
     SEARCH_TERM: The search term (IP, domain, URL, hash, etc.)
-    RESULTS: Comma-separated list of fields to search within and return
-             (Optional - defaults to: page_title,domain,resolved_url,dom)
+    RESULTS: Comma-separated list of fields to search within
+             (Optional - defaults to: page_title,domain.name,resolved_url,dom)
              Examples: domain.name,resolved_url,page_title
     
-    Note: Table format automatically simplifies complex nested data for readability.
+    Note: RESULTS controls which fields to search within, --fields controls which fields to return.
+    Table format automatically simplifies complex nested data for readability.
     Search matches are highlighted with yellow background in table view.
     Use --format json to see complete data including all nested fields.
     
     Examples:
     \b
-    # Basic search (uses default fields)
+    # Basic search (uses default search and return fields)
     webamon search example.com
     webamon search example.com --size 20
     
-    # Basic search with custom fields
+    # Basic search with custom search fields (returns same fields)
     webamon search example.com domain.name,resolved_url
-    webamon search example.com domain.name,resolved_url,page_title
+    
+    # Basic search with custom return fields (uses default search fields)
+    webamon search example.com --fields page_title,domain.name
+    
+    # Basic search with both custom search and return fields
+    webamon search example.com tag --fields page_title,domain.name
     
     # Lucene search (no RESULTS argument)
     webamon search --lucene 'domain.name:"bank*" AND scan_status:success' --index scans
@@ -752,7 +760,7 @@ def search(ctx, search_term: str, results: Optional[str], size: int, from_offset
         if lucene:
             response = client.search_lucene(search_term, index, fields, size, from_offset)
         else:
-            response = client.search(search_term, results, size, from_offset)
+            response = client.search(search_term, results, size, from_offset, fields)
         
         if output_format == 'json':
             console.print_json(data=response)
@@ -793,78 +801,80 @@ def search(ctx, search_term: str, results: Optional[str], size: int, from_offset
                     # Process and filter data for better table display
                     processed_data, omitted_fields = _process_table_data(data)
                 
-                # Add columns based on processed data
-                if processed_data:
-                    for key in processed_data[0].keys():
-                        table.add_column(key.replace('_', ' ').title(), style="cyan", overflow="fold")
+                    # Add columns based on processed data
+                    if processed_data:
+                        for key in processed_data[0].keys():
+                            table.add_column(key.replace('_', ' ').title(), style="cyan", overflow="fold")
+                        
+                        # Add rows
+                        for item in processed_data:
+                            values = []
+                            for value in item.values():
+                                values.append(_format_table_value(value))
+                            table.add_row(*values)
                     
-                    # Add rows
-                    for item in processed_data:
-                        values = []
-                        for value in item.values():
-                            values.append(_format_table_value(value))
-                        table.add_row(*values)
-                
-                console.print(table)
-                
-                # Show information about omitted complex fields
-                if omitted_fields:
-                    omitted_str = ', '.join(omitted_fields)
-                    console.print(f"[yellow]Note:[/yellow] Complex fields omitted from table view: {omitted_str}")
-                    console.print("[dim]Use --format json to see all fields[/dim]")
-                
-                # Show enhanced summary with pagination info
-                if pagination and isinstance(pagination, dict):
-                    total = pagination.get('total', total_hits)
-                    from_pos = pagination.get('from', from_offset)
-                    size_val = pagination.get('size', size)
-                    has_more = pagination.get('has_more', False)
-                    next_from = pagination.get('next_from')
-                    prev_from = pagination.get('prev_from')
+                    console.print(table)
                     
-                    summary = f"[dim]Showing {len(data)} results"
-                    if total:
-                        summary += f" of {total:,} total"
-                    if from_pos is not None:
-                        summary += f" (from position {from_pos:,})"
-                    summary += "[/dim]"
-                    console.print(f"\n{summary}")
+                    # Show information about omitted complex fields
+                    if omitted_fields:
+                        omitted_str = ', '.join(omitted_fields)
+                        console.print(f"[yellow]Note:[/yellow] Complex fields omitted from table view: {omitted_str}")
+                        console.print("[dim]Use --format json to see all fields[/dim]")
                     
-                    # Show enhanced pagination navigation with copy-paste commands
-                    if prev_from is not None or (has_more and next_from is not None):
-                        console.print(f"\n[cyan]📄 Pagination Navigation:[/cyan]")
+                    # Show enhanced summary with pagination info
+                    if pagination and isinstance(pagination, dict):
+                        total = pagination.get('total', total_hits)
+                        from_pos = pagination.get('from', from_offset)
+                        size_val = pagination.get('size', size)
+                        has_more = pagination.get('has_more', False)
+                        next_from = pagination.get('next_from')
+                        prev_from = pagination.get('prev_from')
                         
-                        # Generate complete commands for copy-paste
-                        pagination_commands = _generate_pagination_commands(
-                            search_term, results, pagination, lucene, index, fields, output_format, export
-                        )
+                        summary = f"[dim]Showing {len(data)} results"
+                        if total:
+                            summary += f" of {total:,} total"
+                        if from_pos is not None:
+                            summary += f" (from position {from_pos:,})"
+                        summary += "[/dim]"
+                        console.print(f"\n{summary}")
                         
-                        for cmd in pagination_commands:
-                            console.print(f"[dim]{cmd}[/dim]")
-                        
-                        # Also show the short format for reference
-                        nav_hints = []
-                        if prev_from is not None and prev_from >= 0:
-                            nav_hints.append(f"--from {prev_from} --size {size_val}")
-                        if has_more and next_from is not None:
-                            nav_hints.append(f"--from {next_from} --size {size_val}")
-                        elif has_more and from_pos is not None:
-                            calculated_next = from_pos + size_val
-                            nav_hints.append(f"--from {calculated_next} --size {size_val}")
-                        
-                        if nav_hints:
-                            console.print(f"[dim]Quick options: {' | '.join(nav_hints)}[/dim]")
+                        # Show enhanced pagination navigation with copy-paste commands
+                        if prev_from is not None or (has_more and next_from is not None):
+                            console.print(f"\n[cyan]📄 Pagination Navigation:[/cyan]")
+                            
+                            # Generate complete commands for copy-paste
+                            pagination_commands = _generate_pagination_commands(
+                                search_term, results, pagination, lucene, index, fields, output_format, export
+                            )
+                            
+                            for cmd in pagination_commands:
+                                console.print(f"[dim]{cmd}[/dim]")
+                            
+                            # Also show the short format for reference
+                            nav_hints = []
+                            if prev_from is not None and prev_from >= 0:
+                                nav_hints.append(f"--from {prev_from} --size {size_val}")
+                            if has_more and next_from is not None:
+                                nav_hints.append(f"--from {next_from} --size {size_val}")
+                            elif has_more and from_pos is not None:
+                                calculated_next = from_pos + size_val
+                                nav_hints.append(f"--from {calculated_next} --size {size_val}")
+                            
+                            if nav_hints:
+                                console.print(f"[dim]Quick options: {' | '.join(nav_hints)}[/dim]")
+                    else:
+                        # Fallback summary without pagination
+                        summary = f"[dim]Showing {len(data)} results"
+                        if total_hits is not None and total_hits != len(data):
+                            summary += f" of {total_hits:,} total matches"
+                        summary += "[/dim]"
+                        console.print(f"\n{summary}")
+                    
+                    # Handle export for table format
+                    if export:
+                        _export_to_file(data, export, 'table', title)
                 else:
-                    # Fallback summary without pagination
-                    summary = f"[dim]Showing {len(data)} results"
-                    if total_hits is not None and total_hits != len(data):
-                        summary += f" of {total_hits:,} total matches"
-                    summary += "[/dim]"
-                    console.print(f"\n{summary}")
-                
-                # Handle export for table format
-                if export and isinstance(data, list):
-                    _export_to_file(data, export, 'table', title)
+                    console.print(f"[yellow]No search results found for '{search_term}'[/yellow]")
                     
             elif output_format == 'csv':
                 # CSV output format
@@ -1142,7 +1152,8 @@ def screenshot(ctx, report_id: str, save: Optional[str], output_format: str):
 
 @main.command()
 @click.option('--api-key', help='API key (optional, enables pro features)')
-def configure(api_key: Optional[str]):
+@click.pass_context
+def configure(ctx, api_key: Optional[str]):
     """Configure API connection settings.
     
     Configuration is automatically saved after successful validation."""
@@ -1163,7 +1174,8 @@ def configure(api_key: Optional[str]):
         console.print("[dim]Using search.webamon.com (no API key)[/dim]")
     
     # Test the connection
-    client = WebamonClient(config)
+    verbose = ctx.obj.get('verbose', False) if ctx.obj else False
+    client = WebamonClient(config, verbose=verbose)
     try:
         console.print(f"[dim]Testing connection to {config.api_url}...[/dim]")
         if config.api_key:

@@ -4,8 +4,11 @@ import requests
 from typing import Dict, List, Any, Optional
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+from rich.console import Console
 
 from .config import Config
+
+console = Console()
 
 
 class WebamonAPIError(Exception):
@@ -16,9 +19,10 @@ class WebamonAPIError(Exception):
 class WebamonClient:
     """Client for interacting with Webamon API."""
     
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, verbose: bool = False):
         """Initialize the client with configuration."""
         self.config = config
+        self.verbose = verbose
         self.session = requests.Session()
         
         # Set up retry strategy
@@ -46,8 +50,23 @@ class WebamonClient:
         """Make an HTTP request to the API."""
         url = f"{self.config.api_url.rstrip('/')}/{endpoint.lstrip('/')}"
         
+        # Show request details if verbose mode is enabled
+        if self.verbose:
+            # Construct the full URL with parameters for display
+            if 'params' in kwargs and kwargs['params']:
+                param_str = "&".join([f"{k}={v}" for k, v in kwargs['params'].items() if v is not None])
+                full_url = f"{url}?{param_str}"
+            else:
+                full_url = url
+            console.print(f"[dim]→ {method} {full_url}[/dim]")
+        
         try:
             response = self.session.request(method, url, **kwargs)
+            
+            # Show response status if verbose mode is enabled
+            if self.verbose:
+                status_color = "green" if 200 <= response.status_code < 300 else "red"
+                console.print(f"[dim]← [{status_color}]{response.status_code}[/{status_color}] {response.reason}[/dim]")
             
             # Handle status codes before raise_for_status() to avoid retry complications
             if response.status_code == 401:
@@ -100,13 +119,16 @@ class WebamonClient:
         except requests.exceptions.RequestException as e:
             raise WebamonAPIError(f"Request failed: {e}")
     
-    def search(self, search_term: str, results: str, size: int = 10, from_offset: int = 0) -> Dict[str, Any]:
+    def search(self, search_term: str, results: str, size: int = 10, from_offset: int = 0, fields: Optional[str] = None) -> Dict[str, Any]:
         """Perform basic search with pagination support."""
         params = {
             'search': search_term,
             'results': results,
             'size': size
         }
+        # Add fields parameter if provided
+        if fields:
+            params['fields'] = fields
         # Add pagination for Pro users (with API key)
         if self.config.api_key and from_offset > 0:
             params['from'] = from_offset

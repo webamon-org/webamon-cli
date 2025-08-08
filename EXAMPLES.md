@@ -4,42 +4,55 @@ This document provides practical examples of using the Webamon CLI tool.
 
 ## Quick Start Examples
 
-### Understanding the RESULTS Argument
+### Understanding Search Parameters
 
-**New:** For basic search (non-Lucene), RESULTS argument is now optional! 
-- **Default fields**: `page_title,domain.name,resolved_url,dom`
-- **Custom fields**: Specify your own field list as before
+**For basic search (non-Lucene)**, you can control search and return fields separately:
+- **RESULTS argument**: Which fields to search within (optional - defaults to: `page_title,domain.name,resolved_url,dom`)
+- **--fields option**: Which fields to return in results (optional - defaults to same as search fields)
 
 💡 **Search matches are highlighted with yellow background in table view.**
 
 ```bash
-# New: Simple syntax with default fields (page_title,domain.name,resolved_url,dom)
+# Simple syntax with default search and return fields
 webamon search example.com
 
-# Traditional: Custom fields  
+# Custom search fields (uses default return fields)
 webamon search example.com domain.name,resolved_url
 
+# Custom return fields (uses default search fields)
+webamon search example.com --fields page_title,domain.name
+
+# Both custom search and return fields
+webamon search example.com tag --fields page_title,domain.name
+
 # SEARCH_TERM: What you're looking for (domain, IP, URL, etc.)
-# RESULTS: Optional comma-separated list of fields (uses defaults if omitted)
+# RESULTS: Optional comma-separated list of fields to search within
+# --fields: Optional comma-separated list of fields to return
 ```
 
 💡 **Discover Fields**: Use `webamon fields` to see all 700+ available fields!
 
-**Common RESULTS field combinations:**
-- `domain.name,resolved_url` - Domain info with URLs
-- `domain.name,resolved_url,page_title` - Add page titles
+**Common search field combinations:**
+- `domain.name,resolved_url` - Search in domain and URL fields
+- `page_title,dom` - Search in page titles and DOM content
 - `domain.name,domain.ip,scan_status` - Include IP and scan status
 - `submission_url,scan_date,report_id` - Scan information
 
 ### 1. Basic Domain Search (Free Tier)
 ```bash
-# Search with default fields (page_title,domain.name,resolved_url,dom)
+# Search with default search and return fields
 webamon search example.com
 
-# Search with custom fields
+# Search in custom fields (returns same fields)
 webamon search example.com domain.name,resolved_url,page_title
 
-# Search by IP address with custom fields
+# Search in default fields, return only specific fields
+webamon search example.com --fields page_title,domain.name
+
+# Search in tag field, return page title and domain
+webamon search nrd_20250801 tag --fields page_title,domain.name
+
+# Search by IP address in specific fields
 webamon search 192.168.1.1 domain.ip,domain.name,scan_status
 ```
 

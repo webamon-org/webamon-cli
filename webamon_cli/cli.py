@@ -7,6 +7,7 @@ import click
 from pathlib import Path
 from rich.console import Console
 from rich.table import Table
+from rich import box
 from typing import Optional, List, Dict, Any, Tuple
 
 from .client import WebamonClient
@@ -301,13 +302,14 @@ def _process_table_data(data: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]
     return processed_data, omitted_fields
 
 
-@click.group()
+@click.group(invoke_without_command=True)
 @click.option('--api-key', help='API key for authentication')
 @click.option('--config-file', help='Path to config file')
 @click.option('-v', '--verbose', is_flag=True, help='Show request URL and response status code')
 @click.version_option(version=__version__, prog_name='webamon')
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
-def main(ctx, api_key: Optional[str], config_file: Optional[str], verbose: bool):
+def main(ctx, api_key: Optional[str], config_file: Optional[str], verbose: bool, args):
     """Webamon Search CLI - The Google of Threat Intelligence.
     
     Search domains, scan websites, and retrieve screenshots using the Webamon API.
@@ -325,6 +327,28 @@ def main(ctx, api_key: Optional[str], config_file: Optional[str], verbose: bool)
     ctx.obj['config'] = config
     ctx.obj['verbose'] = verbose
     ctx.obj['client'] = WebamonClient(config, verbose=verbose)
+    
+    # If no subcommand is invoked but args are provided, default to search
+    if ctx.invoked_subcommand is None and args:
+        # Parse args to see if first arg is a known command
+        first_arg = args[0] if args else None
+        
+        # List of known commands (excluding 'search' since that's our default)
+        known_commands = ['status', 'configure', 'scan', 'fields', 'infostealers']
+        
+        if first_arg and first_arg not in known_commands:
+            # This looks like a search term, not a command
+            search_term = first_arg
+            results = args[1] if len(args) > 1 else 'page_title,domain.name,resolved_url,dom'
+            
+            # Call the search function with default parameters
+            ctx.invoke(search, search_term=search_term, results=results, fields=None, 
+                      size=10, from_offset=0, output_format='table', 
+                      export=None, lucene=False, index='scans')
+        elif first_arg in known_commands:
+            # It's a known command, let Click handle it normally
+            ctx.protected_args = list(args)
+            ctx.invoked_subcommand = first_arg
 
 
 @main.command()
@@ -421,7 +445,7 @@ def fields(ctx, search: Optional[str], category: Optional[str], output_format: s
         for field in filtered_fields:
             console.print(field['name'])
     else:  # table format
-        table = Table(title=f"Available Scan Fields ({len(filtered_fields)} found)")
+        table = Table(title=f"Available Scan Fields ({len(filtered_fields)} found)", box=box.HEAVY, show_lines=True)
         table.add_column("Field Name", style="cyan", no_wrap=True)
         table.add_column("Description", style="white")
         
@@ -511,7 +535,7 @@ def infostealers(ctx, domain: str, size: int, from_offset: int, fields: Optional
                 elif len(data) > 0:
                     title += f" ({len(data)} results)"
                 
-                table = Table(title=title)
+                table = Table(title=title, box=box.HEAVY, show_lines=True)
                 
                 # Get all unique keys for columns
                 all_keys = set()
@@ -642,7 +666,7 @@ def infostealers(ctx, domain: str, size: int, from_offset: int, fields: Optional
                 fieldnames = sorted(all_keys)
                 
                 # Create table for preview
-                table = Table(title=f"CSV Preview: {title}")
+                table = Table(title=f"CSV Preview: {title}", box=box.HEAVY, show_lines=True)
                 for key in fieldnames:
                     table.add_column(key.replace('_', ' ').title(), style="cyan")
                 
@@ -796,7 +820,7 @@ def search(ctx, search_term: str, results: Optional[str], size: int, from_offset
             
             if output_format == 'table':
                 if isinstance(data, list) and data:
-                    table = Table(title=title)
+                    table = Table(title=title, box=box.HEAVY, show_lines=True)
                     
                     # Process and filter data for better table display
                     processed_data, omitted_fields = _process_table_data(data)
@@ -889,7 +913,7 @@ def search(ctx, search_term: str, results: Optional[str], size: int, from_offset
                     fieldnames = sorted(all_keys)
                     
                     # Create table for preview
-                    table = Table(title=f"CSV Preview: {title}")
+                    table = Table(title=f"CSV Preview: {title}", box=box.HEAVY, show_lines=True)
                     for key in fieldnames:
                         table.add_column(key.replace('_', ' ').title(), style="cyan")
                     
@@ -981,7 +1005,7 @@ def report(ctx, report_id: str, output_format: str):
                     processed_data, omitted_fields = _process_table_data([report_data])
                     
                     if processed_data:
-                        table = Table(title=f"Scan Report: {report_id}")
+                        table = Table(title=f"Scan Report: {report_id}", box=box.HEAVY, show_lines=True)
                         table.add_column("Field", style="cyan", width=20)
                         table.add_column("Value", style="white", overflow="fold")
                         
@@ -1052,7 +1076,7 @@ def scan(ctx, url: str, output_format: str, fetch_report: bool):
             console.print(f"[green]✓[/green] Scan initiated for: {url}")
             
             if isinstance(response, dict):
-                table = Table(title="Scan Details")
+                table = Table(title="Scan Details", box=box.HEAVY, show_lines=True)
                 table.add_column("Property", style="cyan")
                 table.add_column("Value", style="magenta")
                 

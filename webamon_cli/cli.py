@@ -307,9 +307,8 @@ def _process_table_data(data: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]
 @click.option('--config-file', help='Path to config file')
 @click.option('-v', '--verbose', is_flag=True, help='Show request URL and response status code')
 @click.version_option(version=__version__, prog_name='webamon')
-@click.argument('args', nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
-def main(ctx, api_key: Optional[str], config_file: Optional[str], verbose: bool, args):
+def main(ctx, api_key: Optional[str], config_file: Optional[str], verbose: bool):
     """Webamon Search CLI - The Google of Threat Intelligence.
     
     Search domains, scan websites, and retrieve screenshots using the Webamon API.
@@ -328,27 +327,9 @@ def main(ctx, api_key: Optional[str], config_file: Optional[str], verbose: bool,
     ctx.obj['verbose'] = verbose
     ctx.obj['client'] = WebamonClient(config, verbose=verbose)
     
-    # If no subcommand is invoked but args are provided, default to search
-    if ctx.invoked_subcommand is None and args:
-        # Parse args to see if first arg is a known command
-        first_arg = args[0] if args else None
-        
-        # List of known commands (excluding 'search' since that's our default)
-        known_commands = ['status', 'configure', 'scan', 'fields', 'infostealers']
-        
-        if first_arg and first_arg not in known_commands:
-            # This looks like a search term, not a command
-            search_term = first_arg
-            results = args[1] if len(args) > 1 else 'page_title,domain.name,resolved_url,dom,tag'
-            
-            # Call the search function with default parameters
-            ctx.invoke(search, search_term=search_term, results=results, fields=None, 
-                      size=10, from_offset=0, output_format='table', 
-                      export=None, lucene=False, index='scans')
-        elif first_arg in known_commands:
-            # It's a known command, let Click handle it normally
-            ctx.protected_args = list(args)
-            ctx.invoked_subcommand = first_arg
+    # If no subcommand is invoked, show help
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
 
 
 @main.command()

@@ -67,7 +67,7 @@ We are committed to addressing security issues promptly:
 webamon search --api-key YOUR_SECRET_KEY_HERE example.com
 
 # DON'T: Expose in shell history
-export WEBAMON_API_KEY=your-secret-key && webamon search
+export WEBAMON_API_KEY=your-secret-key && webamon search example.com
 ```
 
 **✅ Secure Practices:**

@@ -99,16 +99,14 @@ brew install pipx && pipx install webamon-cli
 
 **🚀 Start searching immediately - it's that simple!**
 
-No commands needed - just type what you're looking for:
+Use the explicit search command:
 ```bash
-webamon example.com       # Search for example.com
-webamon malware          # Search for malware
-webamon nrd_20250801     # Search latest domain registrations
+webamon search example.com       # Search for example.com
+webamon search malware          # Search for malware
+webamon search nrd_20250801     # Search latest domain registrations
 ```
 
-**The magic:** `webamon <query>` automatically triggers search - **fastest threat hunting workflow ever!**
-
-**Still works the traditional way too:**
+**Other commands:**
 ```bash
 webamon search example.com     # Explicit search command
 webamon configure             # Configure API key for pro features
@@ -152,26 +150,21 @@ The CLI looks for configuration in:
 
 ### Commands
 
-#### Search - **Default Command** ⚡
+#### Search
 
-**🔥 Amazing: No need to type "search" - just search directly!**
+Search the Webamon threat intelligence database:
 
 ```bash
-# Lightning fast - just type what you want to find:
-webamon example.com           # Search for example.com
-webamon malware              # Search for malware  
-webamon 1.1.1.1             # Search for IP address
-webamon nrd_20250801 tag     # Search in specific field
-```
-
-**Traditional syntax still works:**
-```bash
-webamon search example.com   # Explicit search command (same result)
+# Search for domains, IPs, URLs, etc:
+webamon search example.com           # Search for example.com
+webamon search malware              # Search for malware  
+webamon search 1.1.1.1             # Search for IP address
+webamon search nrd_20250801 tag     # Search in specific field
 ```
 
 **How it works:**
-- `webamon <SEARCH_TERM>` - Lightning fast default search 🚀
-- `webamon <SEARCH_TERM> <RESULTS>` - Search in specific fields
+- `webamon search <SEARCH_TERM>` - Basic search
+- `webamon search <SEARCH_TERM> <RESULTS>` - Search in specific fields
 - `SEARCH_TERM`: What you're searching for (domain, IP, URL, hash, etc.)
 - `RESULTS`: Comma-separated list of fields to search within
   - **Default search fields**: `page_title,domain.name,resolved_url,dom,tag`
@@ -183,25 +176,25 @@ webamon search example.com   # Explicit search command (same result)
 
 **Examples:**
 ```bash
-# Default search (fastest way)
-webamon example.com
+# Basic search
+webamon search example.com
 
 # Search in specific fields
-webamon example.com domain.name,resolved_url
+webamon search example.com domain.name,resolved_url
 
 # Custom return fields  
-webamon example.com --fields page_title,domain.name
+webamon search example.com --fields page_title,domain.name
 
 # Both custom search and return fields
-webamon example.com tag --fields page_title,domain.name
+webamon search example.com tag --fields page_title,domain.name
 
 # Different output formats
-webamon example.com --format json
-webamon example.com --format csv
+webamon search example.com --format json
+webamon search example.com --format csv
 
 # Export results
-webamon example.com --export results.json
-webamon example.com --format csv --export analysis.csv
+webamon search example.com --export results.json
+webamon search example.com --format csv --export analysis.csv
 ```
 
 **Pagination (Pro Users Only):**
@@ -326,7 +319,7 @@ webamon fields --search ip --format list
 
 ### Security Research
 ```bash
-# Search for subdomains with default fields
+# Search for subdomains
 webamon search "*.example.com"
 
 # Scan suspicious domains

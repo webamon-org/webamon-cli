@@ -2,26 +2,21 @@
 
 This document provides practical examples of using the Webamon CLI tool.
 
-## ⚡ Amazing Default Search - No Commands Needed!
+## Search Examples
 
-**🔥 Just type what you want to find - it's that simple:**
+**Search the Webamon threat intelligence database:**
 
 ```bash
-# Lightning fast searches - no "search" command needed!
-webamon example.com          # Search for example.com  
-webamon malware             # Search for malware
-webamon 1.1.1.1            # Search IP addresses
-webamon nrd_20250801       # Latest domain registrations
-webamon suspicious.exe      # Search for files
+# Basic searches
+webamon search example.com          # Search for example.com  
+webamon search malware             # Search for malware
+webamon search 1.1.1.1            # Search IP addresses
+webamon search nrd_20250801       # Latest domain registrations
+webamon search suspicious.exe      # Search for files
 
-# Advanced searches still super easy
-webamon example.com tag     # Search in specific field
-webamon malware domain.name # Search domain names for malware
-```
-
-**Traditional syntax still works (but why use it when default is faster?):**
-```bash
-webamon search example.com   # Same result, more typing
+# Advanced searches with field specification
+webamon search example.com tag     # Search in specific field
+webamon search malware domain.name # Search domain names for malware
 ```
 
 ## Quick Start Examples
@@ -35,24 +30,24 @@ webamon search example.com   # Same result, more typing
 💡 **Search matches are highlighted with yellow background in table view.**
 
 ```bash
-# 🚀 AMAZING: Default search - just type what you want!
-webamon example.com
+# Basic search
+webamon search example.com
 
 # Custom search fields (uses default return fields)  
-webamon example.com domain.name,resolved_url
+webamon search example.com domain.name,resolved_url
 
 # Custom return fields (uses default search fields)
-webamon example.com --fields page_title,domain.name
+webamon search example.com --fields page_title,domain.name
 
 # Both custom search and return fields
-webamon example.com tag --fields page_title,domain.name
+webamon search example.com tag --fields page_title,domain.name
 
 # SEARCH_TERM: What you're looking for (domain, IP, URL, etc.)
 # RESULTS: Optional comma-separated list of fields to search within
 # --fields: Optional comma-separated list of fields to return
 
-# Traditional syntax still works (but default is faster!)
-webamon search example.com  # Same as: webamon example.com
+# Explicit search command syntax
+webamon search example.com
 ```
 
 💡 **Discover Fields**: Use `webamon fields` to see all 700+ available fields!
@@ -65,20 +60,20 @@ webamon search example.com  # Same as: webamon example.com
 
 ### 1. Basic Domain Search (Free Tier)
 ```bash
-# 🚀 Default search - lightning fast!
-webamon example.com
+# Basic search
+webamon search example.com
 
 # Search in custom fields (returns same fields)
-webamon example.com domain.name,resolved_url,page_title
+webamon search example.com domain.name,resolved_url,page_title
 
 # Search in default fields, return only specific fields  
-webamon example.com --fields page_title,domain.name
+webamon search example.com --fields page_title,domain.name
 
 # Search in tag field, return page title and domain
-webamon nrd_20250801 tag --fields page_title,domain.name
+webamon search nrd_20250801 tag --fields page_title,domain.name
 
 # Search by IP address in specific fields  
-webamon 192.168.1.1 domain.ip,domain.name,scan_status
+webamon search 192.168.1.1 domain.ip,domain.name,scan_status
 ```
 
 ### 2. Configure Pro API Access
@@ -209,13 +204,13 @@ webamon search --lucene 'domain.ip:[192.168.1.0 TO 192.168.1.255]' --index scans
 
 ### Pagination (Pro Tier)
 ```bash
-# Navigate through results using offset - default search is faster!
-webamon "*.example.com" domain.name,resolved_url --from 0 --size 50
-webamon "*.example.com" domain.name,resolved_url --from 50 --size 50
+# Navigate through results using offset
+webamon search "*.example.com" domain.name,resolved_url --from 0 --size 50
+webamon search "*.example.com" domain.name,resolved_url --from 50 --size 50
 
-# Use direct offset (useful for automation) - lightning fast!
-webamon "malware" domain.name,resolved_url --from 0 --size 100
-webamon "malware" domain.name,resolved_url --from 100 --size 100
+# Use direct offset (useful for automation)
+webamon search "malware" domain.name,resolved_url --from 0 --size 100
+webamon search "malware" domain.name,resolved_url --from 100 --size 100
 
 # Large dataset navigation
 webamon search --lucene 'scan_status:success' --index scans --from 250 --size 25
@@ -234,7 +229,7 @@ done
 
 # Search for multiple terms
 while read domain; do
-  webamon "$domain" >> domain_intel.json  # Default search - faster!
+  webamon search "$domain" >> domain_intel.json
 done < domains.txt
 ```
 
@@ -385,7 +380,7 @@ fi
 ### Security Research
 ```bash
 # Find subdomains
-webamon "*.example.com" domain.name,resolved_url  # Default search rocks!
+webamon search "*.example.com" domain.name,resolved_url
 
 # Search for specific technologies
 webamon search --lucene 'page_title:"WordPress" AND domain.name:"*.com"' --index scans --size 100
@@ -397,7 +392,7 @@ webamon search --lucene 'scan_date:[NOW-7DAY TO NOW] AND (page_title:"phishing" 
 ### Data Export and Analysis
 ```bash
 # Export search results to CSV (requires jq)
-webamon example.com domain.name,resolved_url,page_title --format json | \
+webamon search example.com domain.name,resolved_url,page_title --format json | \
   jq -r '.[] | [.domain_name, .resolved_url, .page_title] | @csv' > results.csv
 
 # Get all scans for a domain over time
@@ -564,21 +559,15 @@ webamon search --lucene 'domain.name:"example.com"'
 webamon search --lucene 'domain.name:"example.com"' --index scans
 ```
 
-### Search Syntax Differences
+### Search Syntax
 
-**🚀 Default Search (AMAZING!):** Just type what you want - no "search" command needed!
+**Basic Search:** Standard syntax for searching the threat intelligence database
 ```bash
-webamon <SEARCH_TERM> [RESULTS] [OPTIONS]
-webamon example.com                              # Lightning fast!
-webamon example.com domain.name,resolved_url     # Custom fields
-webamon example.com --fields page_title         # Custom return fields
-```
-
-**Traditional Basic Search:** Classic syntax (still works but why use it?)
-```bash
-webamon search <SEARCH_TERM> <RESULTS> [OPTIONS]
-webamon search example.com domain.name,resolved_url
-webamon search example.com domain.name,resolved_url --from 50 --size 25
+webamon search <SEARCH_TERM> [RESULTS] [OPTIONS]
+webamon search example.com                              # Basic search
+webamon search example.com domain.name,resolved_url     # Custom fields
+webamon search example.com --fields page_title         # Custom return fields
+webamon search example.com domain.name,resolved_url --from 50 --size 25  # With pagination
 ```
 
 **Lucene Search:** Advanced queries require explicit search command
@@ -590,7 +579,7 @@ webamon search --lucene 'domain.name:"bank*"' --index scans --from 100 --size 50
 
 ## Tips and Best Practices
 
-1. **🚀 Use Default Search**: Skip typing "search" - just `webamon example.com` is fastest!
+1. **Use Explicit Commands**: Use `webamon search <term>` for clear, predictable behavior
 2. **Start with Free Tier**: Test basic functionality before getting an API key
 3. **Use JSON Format for Automation**: Always use `--format json` when scripting
 4. **Respect Rate Limits**: Add delays between requests for bulk operations
@@ -601,4 +590,4 @@ webamon search --lucene 'domain.name:"bank*"' --index scans --from 100 --size 50
 9. **Field Discovery**: Use `webamon fields` to discover available fields before building queries
 10. **Field Selection**: Use default fields for quick searches, specify custom fields for targeted results
 11. **Infostealers Monitoring**: Regularly check domains with `webamon infostealers` for compromised credentials
-12. **Speed Workflow**: Default search syntax = fastest threat hunting ever!
+12. **Clear Workflow**: Explicit command syntax ensures reliable automation

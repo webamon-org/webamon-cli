@@ -119,13 +119,15 @@ class WebamonClient:
         except requests.exceptions.RequestException as e:
             raise WebamonAPIError(f"Request failed: {e}")
     
-    def search(self, search_term: str, results: str, size: int = 10, from_offset: int = 0, fields: Optional[str] = None) -> Dict[str, Any]:
+    def search(self, search_term: str, results: Optional[str], size: int = 10, from_offset: int = 0, fields: Optional[str] = None) -> Dict[str, Any]:
         """Perform basic search with pagination support."""
         params = {
             'search': search_term,
-            'results': results,
             'size': size
         }
+        # Add results parameter only if provided
+        if results:
+            params['results'] = results
         # Add fields parameter if provided
         if fields:
             params['fields'] = fields

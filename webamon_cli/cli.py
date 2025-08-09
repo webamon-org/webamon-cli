@@ -751,9 +751,7 @@ def search(ctx, search_term: str, results: Optional[str], size: int, from_offset
         console.print("[red]Error:[/red] --index is required when using --lucene")
         ctx.exit(1)
     
-    # Set default RESULTS for non-Lucene searches if not provided
-    if not lucene and not results:
-        results = "page_title,domain.name,resolved_url,dom,tag"
+    # Don't set default results - let the API handle defaults
     
     # Check if pagination is being used without API key
     if from_offset > 0 and not config.api_key:

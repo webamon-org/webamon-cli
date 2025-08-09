@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "webamon-cli"
-version = "0.2.2"
+version = "0.2.3"
 description = "Webamon Search CLI - The Google of Threat Intelligence."
 readme = "README.md"
 authors = [{name = "Webamon", email = "info@webamon.com"}]

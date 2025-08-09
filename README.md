@@ -174,7 +174,7 @@ webamon search example.com   # Explicit search command (same result)
 - `webamon <SEARCH_TERM> <RESULTS>` - Search in specific fields
 - `SEARCH_TERM`: What you're searching for (domain, IP, URL, hash, etc.)
 - `RESULTS`: Comma-separated list of fields to search within
-  - **Default search fields**: `page_title,domain.name,resolved_url,dom`
+  - **Default search fields**: `page_title,domain.name,resolved_url,dom,tag`
   - **Custom search fields**: Specify your own field list
 - `--fields`: Comma-separated list of fields to return (separate from search fields)
   - **Default return fields**: Same as search fields when not specified

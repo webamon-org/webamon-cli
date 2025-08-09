@@ -29,7 +29,7 @@ webamon search example.com   # Same result, more typing
 ### Understanding Search Parameters
 
 **For basic search (non-Lucene)**, you can control search and return fields separately:
-- **RESULTS argument**: Which fields to search within (optional - defaults to: `page_title,domain.name,resolved_url,dom`)
+- **RESULTS argument**: Which fields to search within (optional - defaults to: `page_title,domain.name,resolved_url,dom,tag`)
 - **--fields option**: Which fields to return in results (optional - defaults to same as search fields)
 
 💡 **Search matches are highlighted with yellow background in table view.**

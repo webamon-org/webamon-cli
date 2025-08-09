@@ -339,7 +339,7 @@ def main(ctx, api_key: Optional[str], config_file: Optional[str], verbose: bool,
         if first_arg and first_arg not in known_commands:
             # This looks like a search term, not a command
             search_term = first_arg
-            results = args[1] if len(args) > 1 else 'page_title,domain.name,resolved_url,dom'
+            results = args[1] if len(args) > 1 else 'page_title,domain.name,resolved_url,dom,tag'
             
             # Call the search function with default parameters
             ctx.invoke(search, search_term=search_term, results=results, fields=None, 
@@ -732,7 +732,7 @@ def search(ctx, search_term: str, results: Optional[str], size: int, from_offset
     
     SEARCH_TERM: The search term (IP, domain, URL, hash, etc.)
     RESULTS: Comma-separated list of fields to search within
-             (Optional - defaults to: page_title,domain.name,resolved_url,dom)
+             (Optional - defaults to: page_title,domain.name,resolved_url,dom,tag)
              Examples: domain.name,resolved_url,page_title
     
     Note: RESULTS controls which fields to search within, --fields controls which fields to return.
@@ -772,7 +772,7 @@ def search(ctx, search_term: str, results: Optional[str], size: int, from_offset
     
     # Set default RESULTS for non-Lucene searches if not provided
     if not lucene and not results:
-        results = "page_title,domain.name,resolved_url,dom"
+        results = "page_title,domain.name,resolved_url,dom,tag"
     
     # Check if pagination is being used without API key
     if from_offset > 0 and not config.api_key:

@@ -2,6 +2,28 @@
 
 This document provides practical examples of using the Webamon CLI tool.
 
+## ⚡ Amazing Default Search - No Commands Needed!
+
+**🔥 Just type what you want to find - it's that simple:**
+
+```bash
+# Lightning fast searches - no "search" command needed!
+webamon example.com          # Search for example.com  
+webamon malware             # Search for malware
+webamon 1.1.1.1            # Search IP addresses
+webamon nrd_20250801       # Latest domain registrations
+webamon suspicious.exe      # Search for files
+
+# Advanced searches still super easy
+webamon example.com tag     # Search in specific field
+webamon malware domain.name # Search domain names for malware
+```
+
+**Traditional syntax still works (but why use it when default is faster?):**
+```bash
+webamon search example.com   # Same result, more typing
+```
+
 ## Quick Start Examples
 
 ### Understanding Search Parameters
@@ -13,21 +35,24 @@ This document provides practical examples of using the Webamon CLI tool.
 💡 **Search matches are highlighted with yellow background in table view.**
 
 ```bash
-# Simple syntax with default search and return fields
-webamon search example.com
+# 🚀 AMAZING: Default search - just type what you want!
+webamon example.com
 
-# Custom search fields (uses default return fields)
-webamon search example.com domain.name,resolved_url
+# Custom search fields (uses default return fields)  
+webamon example.com domain.name,resolved_url
 
 # Custom return fields (uses default search fields)
-webamon search example.com --fields page_title,domain.name
+webamon example.com --fields page_title,domain.name
 
 # Both custom search and return fields
-webamon search example.com tag --fields page_title,domain.name
+webamon example.com tag --fields page_title,domain.name
 
 # SEARCH_TERM: What you're looking for (domain, IP, URL, etc.)
 # RESULTS: Optional comma-separated list of fields to search within
 # --fields: Optional comma-separated list of fields to return
+
+# Traditional syntax still works (but default is faster!)
+webamon search example.com  # Same as: webamon example.com
 ```
 
 💡 **Discover Fields**: Use `webamon fields` to see all 700+ available fields!
@@ -40,20 +65,20 @@ webamon search example.com tag --fields page_title,domain.name
 
 ### 1. Basic Domain Search (Free Tier)
 ```bash
-# Search with default search and return fields
-webamon search example.com
+# 🚀 Default search - lightning fast!
+webamon example.com
 
 # Search in custom fields (returns same fields)
-webamon search example.com domain.name,resolved_url,page_title
+webamon example.com domain.name,resolved_url,page_title
 
-# Search in default fields, return only specific fields
-webamon search example.com --fields page_title,domain.name
+# Search in default fields, return only specific fields  
+webamon example.com --fields page_title,domain.name
 
 # Search in tag field, return page title and domain
-webamon search nrd_20250801 tag --fields page_title,domain.name
+webamon nrd_20250801 tag --fields page_title,domain.name
 
-# Search by IP address in specific fields
-webamon search 192.168.1.1 domain.ip,domain.name,scan_status
+# Search by IP address in specific fields  
+webamon 192.168.1.1 domain.ip,domain.name,scan_status
 ```
 
 ### 2. Configure Pro API Access
@@ -184,13 +209,13 @@ webamon search --lucene 'domain.ip:[192.168.1.0 TO 192.168.1.255]' --index scans
 
 ### Pagination (Pro Tier)
 ```bash
-# Navigate through results using offset
-webamon search "*.example.com" domain.name,resolved_url --from 0 --size 50
-webamon search "*.example.com" domain.name,resolved_url --from 50 --size 50
+# Navigate through results using offset - default search is faster!
+webamon "*.example.com" domain.name,resolved_url --from 0 --size 50
+webamon "*.example.com" domain.name,resolved_url --from 50 --size 50
 
-# Use direct offset (useful for automation)
-webamon search "malware" domain.name,resolved_url --from 0 --size 100
-webamon search "malware" domain.name,resolved_url --from 100 --size 100
+# Use direct offset (useful for automation) - lightning fast!
+webamon "malware" domain.name,resolved_url --from 0 --size 100
+webamon "malware" domain.name,resolved_url --from 100 --size 100
 
 # Large dataset navigation
 webamon search --lucene 'scan_status:success' --index scans --from 250 --size 25
@@ -209,7 +234,7 @@ done
 
 # Search for multiple terms
 while read domain; do
-  webamon search "$domain" >> domain_intel.json
+  webamon "$domain" >> domain_intel.json  # Default search - faster!
 done < domains.txt
 ```
 
@@ -360,7 +385,7 @@ fi
 ### Security Research
 ```bash
 # Find subdomains
-webamon search "*.example.com" domain.name,resolved_url
+webamon "*.example.com" domain.name,resolved_url  # Default search rocks!
 
 # Search for specific technologies
 webamon search --lucene 'page_title:"WordPress" AND domain.name:"*.com"' --index scans --size 100
@@ -372,7 +397,7 @@ webamon search --lucene 'scan_date:[NOW-7DAY TO NOW] AND (page_title:"phishing" 
 ### Data Export and Analysis
 ```bash
 # Export search results to CSV (requires jq)
-webamon search example.com domain.name,resolved_url,page_title --format json | \
+webamon example.com domain.name,resolved_url,page_title --format json | \
   jq -r '.[] | [.domain_name, .resolved_url, .page_title] | @csv' > results.csv
 
 # Get all scans for a domain over time
@@ -541,14 +566,22 @@ webamon search --lucene 'domain.name:"example.com"' --index scans
 
 ### Search Syntax Differences
 
-**Basic Search:** Requires SEARCH_TERM and RESULTS arguments
+**🚀 Default Search (AMAZING!):** Just type what you want - no "search" command needed!
+```bash
+webamon <SEARCH_TERM> [RESULTS] [OPTIONS]
+webamon example.com                              # Lightning fast!
+webamon example.com domain.name,resolved_url     # Custom fields
+webamon example.com --fields page_title         # Custom return fields
+```
+
+**Traditional Basic Search:** Classic syntax (still works but why use it?)
 ```bash
 webamon search <SEARCH_TERM> <RESULTS> [OPTIONS]
 webamon search example.com domain.name,resolved_url
 webamon search example.com domain.name,resolved_url --from 50 --size 25
 ```
 
-**Lucene Search:** Uses --lucene flag with --index, no RESULTS argument needed
+**Lucene Search:** Advanced queries require explicit search command
 ```bash
 webamon search --lucene '<LUCENE_QUERY>' --index <INDEX> [OPTIONS]
 webamon search --lucene 'domain.name:"bank*"' --index scans
@@ -557,13 +590,15 @@ webamon search --lucene 'domain.name:"bank*"' --index scans --from 100 --size 50
 
 ## Tips and Best Practices
 
-1. **Start with Free Tier**: Test basic functionality before getting an API key
-2. **Use JSON Format for Automation**: Always use `--format json` when scripting
-3. **Respect Rate Limits**: Add delays between requests for bulk operations
-4. **Save Screenshots**: Use the `--save` option to preserve evidence
-5. **Lucene Syntax**: Learn Lucene query syntax for powerful searches
-6. **Error Handling**: Always check return codes in scripts
-7. **Configuration**: Use environment variables or config files for API keys
-8. **Field Discovery**: Use `webamon fields` to discover available fields before building queries
-9. **Field Selection**: Use default fields for quick searches, specify custom fields for targeted results
-10. **Infostealers Monitoring**: Regularly check domains with `webamon infostealers` for compromised credentials
+1. **🚀 Use Default Search**: Skip typing "search" - just `webamon example.com` is fastest!
+2. **Start with Free Tier**: Test basic functionality before getting an API key
+3. **Use JSON Format for Automation**: Always use `--format json` when scripting
+4. **Respect Rate Limits**: Add delays between requests for bulk operations
+5. **Save Screenshots**: Use the `--save` option to preserve evidence
+6. **Lucene Syntax**: Learn Lucene query syntax for powerful searches
+7. **Error Handling**: Always check return codes in scripts
+8. **Configuration**: Use environment variables or config files for API keys
+9. **Field Discovery**: Use `webamon fields` to discover available fields before building queries
+10. **Field Selection**: Use default fields for quick searches, specify custom fields for targeted results
+11. **Infostealers Monitoring**: Regularly check domains with `webamon infostealers` for compromised credentials
+12. **Speed Workflow**: Default search syntax = fastest threat hunting ever!

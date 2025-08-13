@@ -56,7 +56,7 @@ webamon search example.com
 - `domain.name,resolved_url` - Search in domain and URL fields
 - `page_title,dom` - Search in page titles and DOM content
 - `domain.name,domain.ip,scan_status` - Include IP and scan status
-- `submission_url,scan_date,report_id` - Scan information
+- `submission_url,date,report_id` - Scan information
 
 ### 1. Basic Domain Search (Free Tier)
 ```bash
@@ -386,7 +386,7 @@ webamon search "*.example.com" domain.name,resolved_url
 webamon search --lucene 'page_title:"WordPress" AND domain.name:"*.com"' --index scans --size 100
 
 # Find recently scanned suspicious domains
-webamon search --lucene 'scan_date:[NOW-7DAY TO NOW] AND (page_title:"phishing" OR page_title:"malware")' --index scans
+webamon search --lucene 'date:[NOW-7DAY TO NOW] AND (page_title:"phishing" OR page_title:"malware")' --index scans
 ```
 
 ### Data Export and Analysis
@@ -397,7 +397,7 @@ webamon search example.com domain.name,resolved_url,page_title --format json | \
 
 # Get all scans for a domain over time
 webamon search --lucene 'domain.name:"example.com"' --index scans --format json --size 100 | \
-  jq '.[] | {date: .scan_date, status: .scan_status, title: .page_title}'
+  jq '.[] | {date: .date, status: .scan_status, title: .page_title}'
 ```
 
 ## Output Formats

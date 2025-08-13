@@ -50,7 +50,7 @@ webamon search example.com tag --fields page_title,domain.name
 webamon search example.com
 ```
 
-💡 **Discover Fields**: Use `webamon fields` to see all 700+ available fields!
+💡 **Discover Fields**: Use `webamon fields` to see all 180+ available fields!
 
 **Common search field combinations:**
 - `domain.name,resolved_url` - Search in domain and URL fields
@@ -158,7 +158,7 @@ webamon infostealers example.com --from 50 --size 25
 
 ### 7. Discover Available Fields
 ```bash
-# Show all available scan fields (700+ fields!)
+# Show all available scan fields (180+ fields!)
 webamon fields
 
 # Search for domain-related fields
